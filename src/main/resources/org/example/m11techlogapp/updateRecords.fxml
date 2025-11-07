@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="750" prefWidth="1000" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.m11techlogapp.controller.UpdateRecordsController">
+
+   <children>
+      <!-- Main container with two sections -->
+      <VBox alignment="CENTER" spacing="50" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
+
+         <!-- Top row: two columns -->
+         <HBox alignment="CENTER" spacing="100">
+            <!-- Left column: Update Database -->
+            <VBox alignment="TOP_CENTER" prefWidth="354.0" spacing="20">
+               <Label style="-fx-font-size: 30px;" text="Update Database" />
+               <Button maxHeight="26.0" maxWidth="140.0" onAction="#uploadFile" prefHeight="26.0" text="Update With Excel File" />
+               <Button maxHeight="26.0" maxWidth="140.0" onAction="#clearDB" prefHeight="26.0" text="Clear All Records" />
+            </VBox>
+
+            <!-- Right column: Insert Individual Record -->
+            <VBox alignment="TOP_CENTER" prefWidth="450" spacing="20">
+               <Label style="-fx-font-size: 30px;" text="Insert Individual Record" />
+
+               <GridPane alignment="CENTER" hgap="15" vgap="15">
+                  <columnConstraints>
+                     <ColumnConstraints halignment="RIGHT" minWidth="150" />
+                     <ColumnConstraints halignment="LEFT" minWidth="250" />
+                  </columnConstraints>
+
+                  <Label text="Date/Time:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                  <DatePicker fx:id="dttmField" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+                  <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                  <TextField fx:id="nameField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                  <Label text="Nomenclature:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                  <TextField fx:id="nomenField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                  <Label text="Malfunction Code:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                  <ComboBox fx:id="malCdField" onMouseClicked="#initializeMalCd" promptText="Select..." GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+                  <Label text="Hours:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                  <Spinner fx:id="hoursField" GridPane.columnIndex="1" GridPane.rowIndex="4">
+                     <valueFactory>
+                        <SpinnerValueFactory.DoubleSpinnerValueFactory amountToStepBy="0.1" initialValue="1" max="24" min=".2" />
+                     </valueFactory>
+                  </Spinner>
+
+                  <Label text="Corrective Action:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                  <TextField fx:id="corrActField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                  <Button alignment="CENTER" maxHeight="26.0" maxWidth="140.0" onAction="#addIndividualRecord" prefHeight="26" text="Add Individual Record" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                  <rowConstraints>
+                     <RowConstraints />
+                     <RowConstraints />
+                     <RowConstraints />
+                     <RowConstraints />
+                     <RowConstraints />
+                     <RowConstraints />
+                     <RowConstraints />
+                  </rowConstraints>
+               </GridPane>
+            </VBox>
+         </HBox>
+
+         <!-- Bottom row: Return button -->
+         <Button maxHeight="26.0" maxWidth="140.0" onAction="#switchToMainPage" prefHeight="26.0" text="Return to Main Page" />
+      </VBox>
+   </children>
+</AnchorPane>

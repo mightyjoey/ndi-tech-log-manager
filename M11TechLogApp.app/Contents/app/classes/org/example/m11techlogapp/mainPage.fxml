@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefWidth="1000" prefHeight="750"
+            xmlns="http://javafx.com/javafx/17.0.12"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.m11techlogapp.controller.MainPageController">
+
+   <children>
+      <VBox spacing="40" AnchorPane.topAnchor="50" AnchorPane.bottomAnchor="50"
+            AnchorPane.leftAnchor="50" AnchorPane.rightAnchor="50" alignment="CENTER">
+
+         <Label text="Tech Log Application" maxWidth="Infinity" alignment="CENTER">
+            <font>
+               <Font size="30" />
+            </font>
+         </Label>
+
+         <Button text="Generate Logs" mnemonicParsing="false" onAction="#switchToGenerateLogs"
+                 maxWidth="250" prefHeight="50" style="-fx-font-size: 20px;" />
+
+         <Button text="Search by Key Word" mnemonicParsing="false" onAction="#switchToSearch"
+                 maxWidth="250" prefHeight="50" style="-fx-font-size: 20px;" />
+
+         <Button text="Update Records" mnemonicParsing="false" onAction="#switchToUpdateRecords"
+                 maxWidth="250" prefHeight="50" style="-fx-font-size: 18px;" />
+
+      </VBox>
+   </children>
+</AnchorPane>
