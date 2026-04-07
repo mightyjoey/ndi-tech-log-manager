@@ -35,4 +35,4 @@ build/
 .vscode/
 
 ### Mac OS ###
-.DS_Store!/src/main/java/org/example/m11techlogapp/GenerateLogs.java
+.DS_Store
