@@ -44,6 +44,7 @@ public class ConnectDB {
         try {
             System.out.println("Connecting to DB at: " + DB_FILE_PATH);
             conn = DriverManager.getConnection(DB_URL);
+            ensureDatabaseInitialized();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -51,6 +52,31 @@ public class ConnectDB {
 
     public Connection getConnection() {
         return conn;
+    }
+
+    private void ensureDatabaseInitialized() throws SQLException {
+        String createWorkerEntryTable = """
+                CREATE TABLE IF NOT EXISTS worker_entry (
+                    dttm REAL not null,
+                    name TEXT not null,
+                    nomen TEXT not null,
+                    mal_cd TEXT not null,
+                    hours REAL not null,
+                    corr_act TEXT not null,
+                    constraint worker_entries_pk primary key (
+                        dttm,
+                        name,
+                        nomen,
+                        mal_cd,
+                        hours,
+                        corr_act
+                    ) on conflict ignore
+                )
+                """;
+
+        try (var statement = conn.createStatement()) {
+            statement.execute(createWorkerEntryTable);
+        }
     }
 
     public void close() {

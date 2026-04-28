@@ -2,63 +2,61 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 
-<AnchorPane prefHeight="750" prefWidth="1000" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.m11techlogapp.controller.GenerateLogsController">
+<AnchorPane prefHeight="750" prefWidth="1000" styleClass="app-root" stylesheets="@app.css"
+            xmlns="http://javafx.com/javafx/17.0.12"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.m11techlogapp.controller.GenerateLogsController">
 
    <children>
-      <StackPane AnchorPane.bottomAnchor="50" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
-         <VBox alignment="CENTER" maxHeight="600" maxWidth="800" spacing="15">
+      <VBox styleClass="app-shell" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
+         <HBox alignment="CENTER_LEFT" styleClass="top-bar">
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label styleClass="app-title" text="M11 TECH LOG"/>
+            <Region HBox.hgrow="ALWAYS"/>
+         </HBox>
 
-            <!-- Title -->
-            <Label alignment="CENTER" maxWidth="Infinity" text="Generate Work Logs">
-               <font>
-                  <Font size="30" />
-               </font>
-            </Label>
+         <HBox alignment="CENTER" styleClass="page-ribbon">
+            <Label styleClass="page-heading" text="Generate Work Logs"/>
+         </HBox>
 
-            <!-- Main content area with 3 columns -->
-            <HBox alignment="CENTER" spacing="20">
-
-               <!-- Left column: Worker names list and load button -->
-               <VBox alignment="CENTER" prefWidth="220" spacing="10">
-                  <Button mnemonicParsing="false" onAction="#resetNames" text="Load Worker Names" />
-                  <ListView fx:id="listView" onMouseClicked="#handleMouseClick" prefHeight="400" prefWidth="220" />
+         <VBox alignment="TOP_CENTER" spacing="18" styleClass="content" VBox.vgrow="ALWAYS">
+            <HBox alignment="CENTER" maxWidth="900" spacing="30" VBox.vgrow="ALWAYS">
+               <VBox alignment="TOP_CENTER" prefWidth="250" spacing="10" styleClass="panel">
+                  <Label styleClass="section-title" text="Worker Names"/>
+                  <ListView fx:id="listView" onMouseClicked="#handleMouseClick" prefHeight="418" prefWidth="250" VBox.vgrow="ALWAYS"/>
                </VBox>
 
-               <!-- Middle column: Selected names list -->
-               <VBox alignment="CENTER" prefWidth="200" spacing="10">
-                  <Label text="Selected Names" />
-                  <ListView fx:id="selectedNames" onMouseClicked="#handleSelectedNamesClick" prefHeight="400" prefWidth="200" />
+               <VBox alignment="TOP_CENTER" prefWidth="230" spacing="10" styleClass="panel">
+                  <Label styleClass="section-title" text="Selected Names"/>
+                  <ListView fx:id="selectedNames" onMouseClicked="#handleSelectedNamesClick" prefHeight="418" prefWidth="230" VBox.vgrow="ALWAYS"/>
                </VBox>
 
-               <!-- Right column: Inspection type, dates, Generate Log button -->
-               <VBox alignment="CENTER" prefWidth="300" spacing="15">
-                  <Label text="Inspection Type" />
-                  <ComboBox fx:id="comboBox" onMouseClicked="#initializeComboBox" prefWidth="200" />
+               <VBox alignment="TOP_CENTER" prefWidth="260" spacing="10" styleClass="panel">
+                  <Label styleClass="section-title" text="Log Details"/>
 
-                  <Label text="Begin Date" />
-                  <DatePicker fx:id="beginDatePicker" prefWidth="200" />
+                  <Label styleClass="field-label" text="Inspection Type"/>
+                  <ComboBox fx:id="comboBox" onMouseClicked="#initializeComboBox" prefWidth="220"/>
 
-                  <Label text="End Date" />
-                  <DatePicker fx:id="endDatePicker" prefWidth="200" />
+                  <Label styleClass="field-label" text="Begin Date"/>
+                  <DatePicker fx:id="beginDatePicker" prefWidth="220"/>
 
-                  <CheckBox fx:id="annualSplitCheckBox" mnemonicParsing="false" onAction="#toggleAnnualSplit" text="Split NDI log annually" />
+                  <Label styleClass="field-label" text="End Date"/>
+                  <DatePicker fx:id="endDatePicker" prefWidth="220"/>
 
-                  <Label text="Anniversary Date" />
-                  <DatePicker fx:id="anniversaryDatePicker" disable="true" prefWidth="200" promptText="Select date" />
+                  <CheckBox fx:id="annualSplitCheckBox" mnemonicParsing="false" onAction="#toggleAnnualSplit" text="Split NDI log annually"/>
 
-                  <!-- Centered Generate Log button right below End Date -->
-                  <Button mnemonicParsing="false" onAction="#generateLog" prefWidth="140" text="Generate Log" />
+                  <Label styleClass="field-label" text="Anniversary Date"/>
+                  <DatePicker fx:id="anniversaryDatePicker" disable="true" prefWidth="220" promptText="Select date"/>
 
+                  <Button mnemonicParsing="false" onAction="#generateLog" prefWidth="150" styleClass="primary-button" text="Generate Log"/>
                </VBox>
             </HBox>
-         </VBox>
-      </StackPane>
 
-      <!-- Return button centered below all content, anchored at bottom -->
-      <HBox alignment="CENTER" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
-         <Button maxWidth="250" onAction="#switchToMainPage" prefHeight="26" prefWidth="140.0" text="Return to Main Page" />
-      </HBox>
+            <HBox alignment="CENTER">
+               <Button onAction="#switchToMainPage" prefHeight="28" prefWidth="170" styleClass="return-button" text="Return to Main Page"/>
+            </HBox>
+         </VBox>
+      </VBox>
    </children>
 </AnchorPane>
