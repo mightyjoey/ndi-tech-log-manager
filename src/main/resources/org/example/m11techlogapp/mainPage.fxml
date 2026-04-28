@@ -2,32 +2,51 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 
-<AnchorPane prefWidth="1000" prefHeight="750"
+<AnchorPane prefHeight="750" prefWidth="1000" styleClass="app-root" stylesheets="@app.css"
             xmlns="http://javafx.com/javafx/17.0.12"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="org.example.m11techlogapp.controller.MainPageController">
 
    <children>
-      <VBox spacing="40" AnchorPane.topAnchor="50" AnchorPane.bottomAnchor="50"
-            AnchorPane.leftAnchor="50" AnchorPane.rightAnchor="50" alignment="CENTER">
+      <VBox styleClass="app-shell" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
+         <HBox alignment="CENTER_LEFT" styleClass="top-bar">
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label styleClass="app-title" text="M11 TECH LOG"/>
+            <Region HBox.hgrow="ALWAYS"/>
+         </HBox>
 
-         <Label text="Tech Log Application" maxWidth="Infinity" alignment="CENTER">
-            <font>
-               <Font size="30" />
-            </font>
-         </Label>
+         <HBox alignment="CENTER" styleClass="page-ribbon">
+            <Label styleClass="page-heading" text="Main Dashboard"/>
+         </HBox>
 
-         <Button text="Generate Logs" mnemonicParsing="false" onAction="#switchToGenerateLogs"
-                 maxWidth="250" prefHeight="50" style="-fx-font-size: 20px;" />
+         <VBox alignment="TOP_CENTER" spacing="18" styleClass="content" VBox.vgrow="ALWAYS">
+            <VBox maxWidth="760" spacing="18">
+               <VBox spacing="8" styleClass="dashboard-panel">
+                  <HBox alignment="CENTER_LEFT" spacing="18">
+                     <Label styleClass="section-title" text="+"/>
+                     <Button mnemonicParsing="false" onAction="#switchToGenerateLogs" styleClass="secondary-button" text="Generate Logs"/>
+                  </HBox>
+                  <Label styleClass="helper-text" text="Create inspection history and export work logs."/>
+               </VBox>
 
-         <Button text="Search by Key Word" mnemonicParsing="false" onAction="#switchToSearch"
-                 maxWidth="250" prefHeight="50" style="-fx-font-size: 20px;" />
+               <VBox spacing="8" styleClass="dashboard-panel">
+                  <HBox alignment="CENTER_LEFT" spacing="18">
+                     <Label styleClass="section-title" text="?"/>
+                     <Button mnemonicParsing="false" onAction="#switchToSearch" styleClass="secondary-button" text="Search by Key Word"/>
+                  </HBox>
+                  <Label styleClass="helper-text" text="Find existing records by keyword."/>
+               </VBox>
 
-         <Button text="Update Records" mnemonicParsing="false" onAction="#switchToUpdateRecords"
-                 maxWidth="250" prefHeight="50" style="-fx-font-size: 18px;" />
-
+               <VBox spacing="8" styleClass="dashboard-panel">
+                  <HBox alignment="CENTER_LEFT" spacing="18">
+                     <Label styleClass="section-title" text="..."/>
+                     <Button mnemonicParsing="false" onAction="#switchToUpdateRecords" styleClass="secondary-button" text="Update Records"/>
+                  </HBox>
+                  <Label styleClass="helper-text" text="Upload records or add an individual entry."/>
+               </VBox>
+            </VBox>
+         </VBox>
       </VBox>
    </children>
 </AnchorPane>

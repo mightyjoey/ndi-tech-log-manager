@@ -55,7 +55,7 @@ public class GenerateLogsController {
     }
 
     public void initSelectedNames(ArrayList<String> distinctNames) {
-        selectedNames.getItems().addAll(distinctNames);
+        selectedNames.getItems().setAll(distinctNames);
     }
 
     public void initFormState(String method, java.time.LocalDate beginDate, java.time.LocalDate endDate, boolean splitAnnually, java.time.LocalDate anniversaryDate) {
@@ -74,7 +74,7 @@ public class GenerateLogsController {
         ArrayList<String> names = dbController.selectDistinctName();
         connectDB.close();
         Collections.sort(names);
-        listView.getItems().addAll(names);
+        listView.getItems().setAll(names);
         listView.getItems().removeAll(selectedNames.getItems());
         listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
     }
@@ -171,7 +171,11 @@ public class GenerateLogsController {
                     selectedNames.getSelectionModel().getSelectedItems()
             );
 
-            listView.getItems().addAll(selected);
+            for (String name : selected) {
+                if (!listView.getItems().contains(name)) {
+                    listView.getItems().add(name);
+                }
+            }
             selectedNames.getItems().removeAll(selected);
             FXCollections.sort(listView.getItems());
         }
