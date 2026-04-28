@@ -36,6 +36,13 @@
 
 Note: Make sure your Maven and Java versions match the pom.xml configuration (Java 22, JavaFX 22.0.1
 
+### Packaging the macOS App
+1. Build the shaded jar: `mvn clean package`
+2. Create the app image:
+   `jpackage --type app-image --name M11TechLogApp --input target --main-jar M11TechLogApp-shaded.jar --main-class org.example.m11techlogapp.Launcher --icon MyIcon.icns --dest .`
+
+Maven copies the empty `src/main/jpackage/worker_entry.db` into `target`, so `jpackage --input target` includes it in the app image automatically.
+
 ---
 
 ## Database

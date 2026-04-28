@@ -22,6 +22,8 @@ import org.example.m11techlogapp.model.DBController;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.MonthDay;
 import java.util.*;
 
 import static org.example.m11techlogapp.DateUtils.fromDateToJulian;
@@ -57,6 +59,11 @@ public class OutputLogController {
     private LinkedList<LogEntry> logEntries;
     private LinkedList<LogEntry> logEntries2;
     private String method;
+    private String selectedMethod;
+    private LocalDate generateBeginDate;
+    private LocalDate generateEndDate;
+    private boolean annualSplitSelected;
+    private LocalDate annualLogStartDate;
 
     public void getTotalHoursForLabel(){
         double total = 0;
@@ -72,12 +79,24 @@ public class OutputLogController {
         this.selectedNames = names;
     }
 
+    public void setAnnualLogStartDate(LocalDate annualLogStartDate) {
+        this.annualLogStartDate = annualLogStartDate;
+    }
+
+    public void setGenerateLogState(LocalDate beginDate, LocalDate endDate, boolean splitAnnually, LocalDate anniversaryDate) {
+        this.generateBeginDate = beginDate;
+        this.generateEndDate = endDate;
+        this.annualSplitSelected = splitAnnually;
+        this.annualLogStartDate = anniversaryDate;
+    }
+
     //  create table and populate it
     public void initTable(List<LogEntry> logEntries, String method) {
         this.entries = logEntries;
         this.logEntries = new LinkedList<>(logEntries);
         this.logEntries2 = new LinkedList<>(logEntries);
-        this.method = (method.equals("All Inspections")) ? "refer to detailed report" : method;
+        this.method = method;
+        this.selectedMethod = method;
         tableView.getColumns().clear();
         tableView.getItems().clear();
 
@@ -162,6 +181,7 @@ public class OutputLogController {
         GenerateLogsController controller = loader.getController();
         controller.initSelectedNames(selectedNames);
         controller.initAllNames();
+        controller.initFormState(selectedMethod, generateBeginDate, generateEndDate, annualSplitSelected, annualLogStartDate);
 
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         Scene scene = new Scene(root);
@@ -223,6 +243,129 @@ public class OutputLogController {
             }
             count++;
         }
+    }
+
+    public void fillPDFSplitByYear(PDAcroForm acroForm, MonthDay splitDate) throws IOException {
+
+        PDField name = acroForm.getField("1 NAME");
+        if (!nameField.getText().isEmpty()) {
+            name.setValue(nameField.getText());
+        }else{ name.setValue(""); }
+
+        PDField rank = acroForm.getField("2 RANK");
+        if (!rankField.getText().isEmpty()) {
+            rank.setValue(rankField.getText());
+        }else{ rank.setValue(""); }
+
+        PDField organization = acroForm.getField("3 ORGANIZATION");
+        if (!organizationField.getText().isEmpty()) {
+            organization.setValue(organizationField.getText());
+        }else{ organization.setValue(""); }
+
+        LocalDate firstRecordDate = LocalDate.parse(fromJulianToDateString(logEntries.getFirst().getDttm()));
+        LocalDate periodStartDate = getAnnualPeriodStart(firstRecordDate, splitDate);
+        LocalDate nextPeriodStartDate = periodStartDate.plusYears(1);
+
+        int count = 1;
+        String currentDate = "NA";
+        while (count < 22){
+            PDField date = acroForm.getField("6 DATERow"+count);
+            PDField method = acroForm.getField("7 NDI METHODRow"+count);
+            PDField hours = acroForm.getField("8 hoursRow"+count);
+            PDField remarks = acroForm.getField("9 REMARKSrow"+count);
+
+            if (!logEntries.isEmpty()){
+                LocalDate nextEntryDate = LocalDate.parse(fromJulianToDateString(logEntries.peek().getDttm()));
+                if (!nextEntryDate.isBefore(nextPeriodStartDate)) {
+                    break;
+                }
+
+                LogEntry logEntry = logEntries.poll();
+                currentDate = fromJulianToDateString(logEntry.getDttm());
+                if (count == 1) {
+                    PDField startDate = acroForm.getField("4 DATE IN");
+                    startDate.setValue(currentDate);
+                }
+                date.setValue(currentDate);
+                method.setValue(this.method);
+                hours.setValue(logEntry.getHours());
+                remarks.setValue(logEntry.getNomen());
+            }else{
+                break;
+            }
+            count++;
+        }
+
+        PDField endDate = acroForm.getField("4 DATE OUT");
+        endDate.setValue(currentDate);
+    }
+
+    private LocalDate getAnnualPeriodStart(LocalDate entryDate, MonthDay splitDate) {
+        LocalDate periodStart = splitDate.atYear(entryDate.getYear());
+        if (entryDate.isBefore(periodStart)) {
+            periodStart = splitDate.atYear(entryDate.getYear() - 1);
+        }
+        return periodStart;
+    }
+
+    private boolean isAllInspectionsLog() {
+        return "All Inspections".equals(selectedMethod);
+    }
+
+    private Map<String, LinkedList<LogEntry>> groupByInspectionMethod(List<LogEntry> sourceEntries) {
+        Map<String, LinkedList<LogEntry>> groupedEntries = new LinkedHashMap<>();
+        groupedEntries.put("Eddy Current", new LinkedList<>());
+        groupedEntries.put("Liquid Penetrant", new LinkedList<>());
+        groupedEntries.put("Magnetic Particle", new LinkedList<>());
+        groupedEntries.put("Radiographic", new LinkedList<>());
+        groupedEntries.put("Ultrasonic", new LinkedList<>());
+        groupedEntries.put("Other", new LinkedList<>());
+
+        for (LogEntry entry : sourceEntries) {
+            for (String inspectionMethod : getInspectionMethodsForEntry(entry)) {
+                groupedEntries.get(inspectionMethod).add(entry);
+            }
+        }
+
+        return groupedEntries;
+    }
+
+    private List<String> getInspectionMethodsForEntry(LogEntry entry) {
+        return switch (entry.getMal_cd()) {
+            case "572" -> List.of("Eddy Current");
+            case "576" -> List.of("Liquid Penetrant");
+            case "571" -> List.of("Magnetic Particle");
+            case "570" -> List.of("Radiographic");
+            case "575" -> List.of("Ultrasonic");
+            default -> getInspectionMethodsFromCorrectiveAction(entry.getCorr_act());
+        };
+    }
+
+    private List<String> getInspectionMethodsFromCorrectiveAction(String correctiveAction) {
+        List<String> inspectionMethods = new ArrayList<>();
+        String text = correctiveAction == null ? "" : " " + correctiveAction.toUpperCase() + " ";
+
+        if (text.contains(" EDDY CURRENT") || text.contains(" ET ")) {
+            inspectionMethods.add("Eddy Current");
+        }
+        if (text.contains(" PENETRANT") || text.contains(" PT ")) {
+            inspectionMethods.add("Liquid Penetrant");
+        }
+        if (text.contains(" MAG PARTICLE") || text.contains(" MT ")) {
+            inspectionMethods.add("Magnetic Particle");
+        }
+        if (text.contains(" RADIOGRAPHIC") || text.contains(" RT ")) {
+            inspectionMethods.add("Radiographic");
+        }
+        if (text.contains(" ULTRASONIC") || text.contains(" UT ")) {
+            inspectionMethods.add("Ultrasonic");
+        }
+
+        if (inspectionMethods.isEmpty()) {
+            inspectionMethods.add("Other");
+        }
+
+        return inspectionMethods;
     }
 
     public void fillPDF(PDAcroForm acroForm) throws IOException {
@@ -346,6 +489,47 @@ public class OutputLogController {
         int pageCount = 1;
 
         try {
+            if (newPdfName.equals("NDI_Tech_Log.pdf") && isAllInspectionsLog()) {
+                String originalMethod = this.method;
+                LinkedList<LogEntry> originalLogEntries = this.logEntries;
+
+                for (Map.Entry<String, LinkedList<LogEntry>> methodEntries : groupByInspectionMethod(logEntriesList).entrySet()) {
+                    if (methodEntries.getValue().isEmpty()) {
+                        continue;
+                    }
+
+                    this.method = methodEntries.getKey();
+                    this.logEntries = methodEntries.getValue();
+
+                    while (!this.logEntries.isEmpty()) {
+                        try (InputStream templateStream = getClass().getClassLoader().getResourceAsStream(pdfSource);
+                             PDDocument document = PDDocument.load(templateStream)) {
+
+                            PDAcroForm acroForm = document.getDocumentCatalog().getAcroForm();
+
+                            if (annualLogStartDate == null) {
+                                fillPDF(acroForm);
+                            } else {
+                                fillPDFSplitByYear(acroForm, MonthDay.from(annualLogStartDate));
+                            }
+
+                            if (acroForm != null) {
+                                acroForm.flatten();
+                            }
+
+                            File tempPage = File.createTempFile("page_" + pageCount++, ".pdf");
+                            tempPage.deleteOnExit();
+                            document.save(tempPage);
+                            merger.addSource(tempPage);
+                        }
+                    }
+                }
+
+                this.method = originalMethod;
+                this.logEntries = originalLogEntries;
+                logEntriesList.clear();
+            }
+
             while (!logEntriesList.isEmpty()) {
 
                 // Load template from resources (classpath)
@@ -355,7 +539,11 @@ public class OutputLogController {
                     PDAcroForm acroForm = document.getDocumentCatalog().getAcroForm();
 
                     if (newPdfName.equals("NDI_Tech_Log.pdf")) {
-                        fillPDF(acroForm);
+                        if (annualLogStartDate == null) {
+                            fillPDF(acroForm);
+                        } else {
+                            fillPDFSplitByYear(acroForm, MonthDay.from(annualLogStartDate));
+                        }
                     } else {
                         fillDetailedPDF(acroForm);
                     }

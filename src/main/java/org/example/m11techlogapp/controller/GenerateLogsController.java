@@ -35,6 +35,10 @@ public class GenerateLogsController {
     private DatePicker beginDatePicker;
     @FXML
     private DatePicker endDatePicker;
+    @FXML
+    private CheckBox annualSplitCheckBox;
+    @FXML
+    private DatePicker anniversaryDatePicker;
 
     public void switchToMainPage(javafx.event.ActionEvent event) throws IOException {
         Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("/org/example/m11techlogapp/mainPage.fxml")));
@@ -54,6 +58,16 @@ public class GenerateLogsController {
         selectedNames.getItems().addAll(distinctNames);
     }
 
+    public void initFormState(String method, java.time.LocalDate beginDate, java.time.LocalDate endDate, boolean splitAnnually, java.time.LocalDate anniversaryDate) {
+        initializeComboBox(null);
+        comboBox.setValue(method);
+        beginDatePicker.setValue(beginDate);
+        endDatePicker.setValue(endDate);
+        annualSplitCheckBox.setSelected(splitAnnually);
+        anniversaryDatePicker.setDisable(!splitAnnually);
+        anniversaryDatePicker.setValue(anniversaryDate);
+    }
+
     public void initAllNames(){
         ConnectDB connectDB = new ConnectDB();
         DBController dbController = new DBController(connectDB);
@@ -61,6 +75,7 @@ public class GenerateLogsController {
         connectDB.close();
         Collections.sort(names);
         listView.getItems().addAll(names);
+        listView.getItems().removeAll(selectedNames.getItems());
         listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
     }
 
@@ -84,6 +99,17 @@ public class GenerateLogsController {
         comboBox.setItems(FXCollections.observableArrayList("Eddy Current", "Liquid Penetrant", "Magnetic Particle", "Radiographic", "Ultrasonic", "All Inspections"));
     }
 
+    public void toggleAnnualSplit(javafx.event.ActionEvent event) {
+        boolean splitAnnually = annualSplitCheckBox.isSelected();
+        anniversaryDatePicker.setDisable(!splitAnnually);
+
+        if (splitAnnually && anniversaryDatePicker.getValue() == null) {
+            anniversaryDatePicker.setValue(beginDatePicker.getValue());
+        } else if (!splitAnnually) {
+            anniversaryDatePicker.setValue(null);
+        }
+    }
+
     //  take values from menu to create log and launch output log page
     public void generateLog(javafx.event.ActionEvent event) throws IOException, SQLException {
         String method = comboBox.getValue();
@@ -100,6 +126,11 @@ public class GenerateLogsController {
             return;
         }
 
+        if (annualSplitCheckBox.isSelected() && anniversaryDatePicker.getValue() == null) {
+            showAlert(Alert.AlertType.INFORMATION, "Error", "select an anniversary date or uncheck annual split");
+            return;
+        }
+
         // Fetch the log entries using the updated method
         ConnectDB connectDB = new ConnectDB();
         DBController dbController = new DBController(connectDB);
@@ -111,6 +142,7 @@ public class GenerateLogsController {
         Parent root = loader.load();
         OutputLogController controller = loader.getController();
         controller.initTable(logEntries,method);  // Pass the list of LogEntry objects
+        controller.setGenerateLogState(beginDatePicker.getValue(), endDatePicker.getValue(), annualSplitCheckBox.isSelected(), anniversaryDatePicker.getValue());
         controller.getTotalHoursForLabel();
 
         ObservableList<String> names = selectedNames.getItems();

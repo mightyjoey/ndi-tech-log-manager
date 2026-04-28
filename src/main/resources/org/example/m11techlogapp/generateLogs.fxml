@@ -43,6 +43,11 @@
                   <Label text="End Date" />
                   <DatePicker fx:id="endDatePicker" prefWidth="200" />
 
+                  <CheckBox fx:id="annualSplitCheckBox" mnemonicParsing="false" onAction="#toggleAnnualSplit" text="Split NDI log annually" />
+
+                  <Label text="Anniversary Date" />
+                  <DatePicker fx:id="anniversaryDatePicker" disable="true" prefWidth="200" promptText="Select date" />
+
                   <!-- Centered Generate Log button right below End Date -->
                   <Button mnemonicParsing="false" onAction="#generateLog" prefWidth="140" text="Generate Log" />
 

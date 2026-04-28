@@ -25,8 +25,9 @@ public class ConnectDB {
             File appRoot = jarFile.getParentFile().getParentFile();// Contents/Java → Contents
             if(appRoot.getName().equals("Contents")){
                 File resourcesDir = new File(appRoot, "Resources");
-                // Point to worker_entry.db inside Resources
-                dbPath = new File(resourcesDir, "worker_entry.db").getAbsolutePath();
+                File resourcesDb = new File(resourcesDir, "worker_entry.db");
+                File appDirDb = new File(jarFile.getParentFile(), "worker_entry.db");
+                dbPath = resourcesDb.exists() ? resourcesDb.getAbsolutePath() : appDirDb.getAbsolutePath();
             } else{
                 dbPath = System.getProperty("user.dir") + File.separator + "worker_entry.db";
             }
