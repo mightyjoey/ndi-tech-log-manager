@@ -1,87 +1,180 @@
 # M11TechLogApp
 
-**M11TechLogApp** is a desktop application written in **Java** using **JavaFX** for the user interface and **SQLite** for the database. It is designed to manage nondestructive inspection (NDI) logs, allowing users to add, edit, upload, and export inspection records.  
+M11TechLogApp is a macOS desktop application for managing nondestructive inspection (NDI) tech log records. It is built with Java 22, JavaFX, SQLite, Apache POI, and PDFBox.
 
-**Currently macOS only. Windows support is planned for a future release.**
+The app lets users import or enter inspection records, search the database, generate filtered log views, and export completed NDI Tech Log and Detailed Tech Log PDFs.
 
----
+> Current target: macOS on Apple Silicon. The Maven configuration uses JavaFX `mac-aarch64` artifacts.
 
 ## Features
 
-- Add, edit, and remove inspection entries  
-- Upload inspection data from Excel (`.xlsx`) files to update the database  
-- Generate PDF reports (NDI Tech Log & Detailed Tech Log)  
-- Track total inspections and hours  
-- User-friendly JavaFX interface  
+- Add individual inspection records
+- Import inspection records from Excel workbooks
+- Search records by nomenclature or corrective action keyword
+- Generate logs by inspector, inspection method, and date range
+- Generate all-inspection logs grouped by method
+- Optionally split generated logs by an annual anniversary date
+- Review totals for inspections and hours before export
+- Remove rows from generated results, with the option to delete the record from the database
+- Export `NDI_Tech_Log.pdf` and `Detailed_Tech_Log.pdf`
 
----
+## Requirements
 
-## Options for Installation / Running the App
+- macOS on Apple Silicon
+- JDK 22
+- Maven, or the included Maven wrapper
+- SQLite database file named `worker_entry.db`
 
-### macOS Standalone
+## Quick Start
 
-1. Copy the `M11TechLogApp.app` folder to your Desktop or any preferred location.  
-2. Double-click the `.app` to launch the application.  
+From the project root:
 
-### IntelliJ IDEA
+```bash
+./mvnw javafx:run
+```
 
-1. Open the project in **IntelliJ IDEA**.  
-2. Open the **Maven** tool window (usually on the right side).  
-3. Expand **Plugins → javafx → javafx:run**.  
-4. Click **Run** to start the application.
+If your local Maven installation is configured for Java 22, this also works:
 
-### Using the Terminal
-1. Open a terminal in the project root (where the pom.xml is).
-2. Run the following command: mvn javafx:run
+```bash
+mvn javafx:run
+```
 
-Note: Make sure your Maven and Java versions match the pom.xml configuration (Java 22, JavaFX 22.0.1
+The app expects a writable `worker_entry.db` in the project root when run from source. If the file does not exist, the app creates the `worker_entry` table automatically, but it will start empty.
 
-### Packaging the macOS App
-1. Build the shaded jar: `mvn clean package`
-2. Create the app image:
-   `jpackage --type app-image --name M11TechLogApp --input target --main-jar M11TechLogApp-shaded.jar --main-class org.example.m11techlogapp.Launcher --icon MyIcon.icns --dest .`
+## Running in IntelliJ IDEA
 
-Maven copies the empty `src/main/jpackage/worker_entry.db` into `target`, so `jpackage --input target` includes it in the app image automatically.
+1. Open the project in IntelliJ IDEA.
+2. Confirm the project SDK is JDK 22.
+3. Open the Maven tool window.
+4. Run `Plugins > javafx > javafx:run`.
 
----
+## Packaging for macOS
+
+Build the shaded JAR:
+
+```bash
+./mvnw clean package
+```
+
+Create a macOS app image:
+
+```bash
+jpackage \
+  --type app-image \
+  --name M11TechLogApp \
+  --input target \
+  --main-jar M11TechLogApp-shaded.jar \
+  --main-class org.example.m11techlogapp.Launcher \
+  --icon MyIcon.icns \
+  --dest .
+```
+
+The Maven build copies `src/main/jpackage/worker_entry.db` into `target`, so `jpackage --input target` includes the starter database in the app image.
 
 ## Database
 
-- The app uses an **SQLite** database (`worker_entry.db`) stored in the `Resources` folder inside the `.app` bundle.  
-- When running in IntelliJ IDEA, place the database in the `resources` folder at the project root.  
+The app uses SQLite and stores records in the `worker_entry` table.
 
-**Database connection logic** is handled in `ConnectDB.java`. The app opens and closes the connection for each query. This is sufficient for a small SQLite desktop app.  
+When running from source, the database path is:
 
----
+```text
+worker_entry.db
+```
 
-## Uploading Excel Files
+When running from a packaged `.app`, the app looks for:
 
-The app can update the database from Excel (`.xlsx`) files.  
+```text
+M11TechLogApp.app/Contents/Resources/worker_entry.db
+```
 
-### Column Layout (No Header)
+If that file is not present, it falls back to a database beside the packaged Java files.
 
-| Column | Field              | Description                       | Example                 | Notes                                  |
-|--------|--------------------|-----------------------------------|-------------------------|---------------------------------------|
-| 1      | Date/Time          | Date and time of inspection       | 3/9/2023 11:03:59       | Must follow `M/d/yyyy HH:mm:ss` format |
-| 2      | Last Name          | Inspector's last name             | SMITH                   | Text, all caps recommended            |
-| 3      | Nomenclature       | Item being inspected              | WHEEL BRAKE             | Text                                   |
-| 4      | Malfunction Code   | 3-digit code                      | 572                     | Exactly 3 digits                        |
-| 5      | Hours              | Duration of inspection            | 5.6                     | Only 1 decimal allowed                  |
-| 6      | Corrective Action  | Summary of what was done          | INSPECTED BRAKE         | Text                                   |
+### Schema
 
-**Important Notes:**  
+```sql
+CREATE TABLE IF NOT EXISTS worker_entry (
+  dttm REAL NOT NULL,
+  name TEXT NOT NULL,
+  nomen TEXT NOT NULL,
+  mal_cd TEXT NOT NULL,
+  hours REAL NOT NULL,
+  corr_act TEXT NOT NULL,
+  PRIMARY KEY (dttm, name, nomen, mal_cd, hours, corr_act) ON CONFLICT IGNORE
+);
+```
 
-- No header row should be included.  
-- No extra columns or empty rows.  
-- Date/Time must strictly follow `M/d/yyyy HH:mm:ss` format (e.g., `3/9/2023 11:03:59`).  
+Duplicate rows are ignored by the primary key constraint.
 
-**Example Row:**
-3/9/2023 11:03:59 | SMITH | WHEEL BRAKE | 572 | 5.6 | inspected brake 
+## Excel Import Format
 
----
+Use the Update Records screen to import an Excel workbook. The first sheet is read, and every non-empty row must contain exactly six columns with no header row.
 
-## Exporting PDFs
+| Column | Field | Example | Notes |
+| --- | --- | --- | --- |
+| 1 | Date/time | `3/9/2023 11:03` | Excel date cells are recommended. Text dates should use `M/d/yyyy H:mm`. |
+| 2 | Last name | `SMITH` | Text is converted to uppercase. |
+| 3 | Nomenclature | `WHEEL BRAKE` | Text is converted to uppercase. |
+| 4 | Malfunction code | `572` | Inspection method code. |
+| 5 | Hours | `5.6` | Numeric value. |
+| 6 | Corrective action | `INSPECTED BRAKE` | Text is converted to uppercase. |
 
-- Generate **NDI Tech Log** and **Detailed Tech Log** reports.  
-- Select the output folder and provide a folder name for saving the PDFs.  
-- Reports are automatically filled based on the current table data.  
+Supported method codes used by the app:
+
+| Code | Method |
+| --- | --- |
+| `570` | Radiographic |
+| `571` | Magnetic Particle |
+| `572` | Eddy Current |
+| `575` | Ultrasonic |
+| `576` | Liquid Penetrant |
+| `579` | Other |
+| `0` | Other/unspecified |
+
+Although the file chooser allows `.xls` and `.xlsx`, the current importer uses Apache POI's `XSSFWorkbook`, so `.xlsx` is the reliable format.
+
+## Generating and Exporting Logs
+
+1. Open Generate Logs.
+2. Select one or more inspector names.
+3. Choose an inspection method or All Inspections.
+4. Choose a beginning and ending date.
+5. Optionally enable Annual Split and choose the anniversary date.
+6. Review the generated table and totals.
+7. Export PDFs by selecting a parent folder and entering a new output folder name.
+
+Exports create:
+
+```text
+NDI_Tech_Log.pdf
+Detailed_Tech_Log.pdf
+```
+
+For All Inspections, the export groups records into method-specific pages. For annual split exports, pages are broken at the selected anniversary date.
+
+## Project Layout
+
+```text
+src/main/java/org/example/m11techlogapp/
+  DateUtils.java                         Date conversion helpers
+  Launcher.java                          Packaged app entry point
+  HelloApplication.java                  JavaFX application startup
+  controller/                            JavaFX screen controllers
+  model/                                 SQLite connection and queries
+
+src/main/resources/
+  org/example/m11techlogapp/*.fxml       JavaFX views
+  org/example/m11techlogapp/app.css      App styling
+  ndiLog.pdf                             NDI Tech Log template
+  detailedLog.pdf                        Detailed Tech Log template
+
+src/main/jpackage/
+  worker_entry.db                        Starter database copied during packaging
+```
+
+## Development Notes
+
+- Main class for packaged runs: `org.example.m11techlogapp.Launcher`
+- Maven artifact: `M11TechLogApp`
+- Shaded JAR output: `target/M11TechLogApp-shaded.jar`
+- Local runtime databases and packaged build outputs are ignored by Git.
+- The current dependency setup is macOS Apple Silicon specific. Windows or Intel macOS support will require updating the JavaFX classifiers in `pom.xml`.
