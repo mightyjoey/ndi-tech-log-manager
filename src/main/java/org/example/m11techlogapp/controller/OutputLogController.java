@@ -245,6 +245,38 @@ public class OutputLogController {
         }
     }
 
+    public void fillDetailedPDFSplitByYear(PDAcroForm acroForm, MonthDay splitDate) throws IOException {
+        LocalDate firstRecordDate = LocalDate.parse(fromJulianToDateString(logEntries2.getFirst().getDttm()));
+        LocalDate periodStartDate = getAnnualPeriodStart(firstRecordDate, splitDate);
+        LocalDate nextPeriodStartDate = periodStartDate.plusYears(1);
+
+        int count = 1;
+        while (count < 11){
+            PDField date = acroForm.getField("DATE_"+count);
+            PDField name = acroForm.getField("NAME_"+count);
+            PDField nomen = acroForm.getField("NOMEN_"+count);
+            PDField hours = acroForm.getField("HOURS_"+count);
+            PDField corrAct = acroForm.getField("undefined_"+count);
+
+            if (!logEntries2.isEmpty()){
+                LocalDate nextEntryDate = LocalDate.parse(fromJulianToDateString(logEntries2.peek().getDttm()));
+                if (!nextEntryDate.isBefore(nextPeriodStartDate)) {
+                    break;
+                }
+
+                LogEntry logEntry = logEntries2.poll();
+                date.setValue(fromJulianToDateString(logEntry.getDttm()));
+                name.setValue(logEntry.getName());
+                nomen.setValue(logEntry.getNomen());
+                hours.setValue(logEntry.getHours());
+                corrAct.setValue(logEntry.getCorr_act());
+            }else{
+                break;
+            }
+            count++;
+        }
+    }
+
     public void fillPDFSplitByYear(PDAcroForm acroForm, MonthDay splitDate) throws IOException {
 
         PDField name = acroForm.getField("1 NAME");
@@ -530,6 +562,44 @@ public class OutputLogController {
                 logEntriesList.clear();
             }
 
+            if (newPdfName.equals("Detailed_Tech_Log.pdf") && isAllInspectionsLog()) {
+                LinkedList<LogEntry> originalLogEntries = this.logEntries2;
+
+                for (Map.Entry<String, LinkedList<LogEntry>> methodEntries : groupByInspectionMethod(logEntriesList).entrySet()) {
+                    if (methodEntries.getValue().isEmpty()) {
+                        continue;
+                    }
+
+                    this.logEntries2 = methodEntries.getValue();
+
+                    while (!this.logEntries2.isEmpty()) {
+                        try (InputStream templateStream = getClass().getClassLoader().getResourceAsStream(pdfSource);
+                             PDDocument document = PDDocument.load(templateStream)) {
+
+                            PDAcroForm acroForm = document.getDocumentCatalog().getAcroForm();
+
+                            if (annualLogStartDate == null) {
+                                fillDetailedPDF(acroForm);
+                            } else {
+                                fillDetailedPDFSplitByYear(acroForm, MonthDay.from(annualLogStartDate));
+                            }
+
+                            if (acroForm != null) {
+                                acroForm.flatten();
+                            }
+
+                            File tempPage = File.createTempFile("page_" + pageCount++, ".pdf");
+                            tempPage.deleteOnExit();
+                            document.save(tempPage);
+                            merger.addSource(tempPage);
+                        }
+                    }
+                }
+
+                this.logEntries2 = originalLogEntries;
+                logEntriesList.clear();
+            }
+
             while (!logEntriesList.isEmpty()) {
 
                 // Load template from resources (classpath)
@@ -545,7 +615,11 @@ public class OutputLogController {
                             fillPDFSplitByYear(acroForm, MonthDay.from(annualLogStartDate));
                         }
                     } else {
-                        fillDetailedPDF(acroForm);
+                        if (annualLogStartDate == null) {
+                            fillDetailedPDF(acroForm);
+                        } else {
+                            fillDetailedPDFSplitByYear(acroForm, MonthDay.from(annualLogStartDate));
+                        }
                     }
 
                     if (acroForm != null) {
