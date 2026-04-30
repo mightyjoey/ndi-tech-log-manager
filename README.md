@@ -84,10 +84,10 @@ worker_entry.db
 When running from a packaged `.app`, the app looks for:
 
 ```text
-M11TechLogApp.app/Contents/Resources/worker_entry.db
+~/Library/Application Support/M11TechLogApp/worker_entry.db
 ```
 
-If that file is not present, it falls back to a database beside the packaged Java files.
+On first launch, the packaged app copies the starter database from the app bundle into that writable Application Support location. This avoids writing records into `M11TechLogApp.app/Contents/Resources`, which macOS may treat as read-only after download or installation.
 
 ### Schema
 
@@ -130,7 +130,7 @@ Supported method codes used by the app:
 | `579` | Other |
 | `0` | Other/unspecified |
 
-Although the file chooser allows `.xls` and `.xlsx`, the current importer uses Apache POI's `XSSFWorkbook`, so `.xlsx` is the reliable format.
+The importer uses Apache POI to detect workbook format automatically, so both `.xls` and `.xlsx` files are supported.
 
 ## Generating and Exporting Logs
 
