@@ -4,7 +4,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.example.m11techlogapp.LogEntry;
 
 import java.io.*;
@@ -63,50 +63,50 @@ public class DBController {
         try (Connection conn = connection.getConnection()) {
             conn.setAutoCommit(false);
 
-            FileInputStream file = new FileInputStream(filepath);
-            Workbook workbook = new XSSFWorkbook(file);
-            Sheet sheet = workbook.getSheetAt(0);
+            try (FileInputStream file = new FileInputStream(filepath);
+                 Workbook workbook = WorkbookFactory.create(file)) {
+                Sheet sheet = workbook.getSheetAt(0);
 
-            for (Row row : sheet) {
-                // Skip empty rows
-                if (row == null || row.getPhysicalNumberOfCells() == 0) continue;
+                for (Row row : sheet) {
+                    // Skip empty rows
+                    if (row == null || row.getPhysicalNumberOfCells() == 0) continue;
 
-                // Expecting exactly 6 columns
-                if (row.getPhysicalNumberOfCells() != 6) {
-                    return "table row must have exactly 6 columns (date time, name, nomenclature, mal. code, hours, corrective action)";
-                }
-
-                // Extract cell values
-                double xdttm = fromDateTimeToJulian(getCellValueAsString(row.getCell(0)));
-                String xname = getCellValueAsString(row.getCell(1)).trim();
-                String xnomen = getCellValueAsString(row.getCell(2)).trim();
-                String xmal_cd = getCellValueAsString(row.getCell(3)).trim();
-                double xhours = Double.parseDouble(getCellValueAsString(row.getCell(4)));
-                String xcorr_act = getCellValueAsString(row.getCell(5));
-
-
-                String workerEntryInsert = "INSERT INTO worker_entry(dttm, name, nomen, mal_cd, hours, corr_act) VALUES (?, ?, ?, ?, ?, ?)";
-                try (PreparedStatement ps = conn.prepareStatement(workerEntryInsert)) {
-                    ps.setDouble(1, xdttm);
-                    ps.setString(2, xname);
-                    ps.setString(3, xnomen);
-                    ps.setString(4, xmal_cd);
-                    ps.setDouble(5, xhours);
-                    ps.setString(6, xcorr_act);
-
-                    if (ps.executeUpdate() == 1) {
-                        updatesMade++;
-                    } else {
-                        System.out.println("Failed to insert: " + xname + " " + xnomen + " " + xmal_cd);
+                    // Expecting exactly 6 columns
+                    if (row.getPhysicalNumberOfCells() != 6) {
+                        conn.rollback();
+                        return "table row must have exactly 6 columns (date time, name, nomenclature, mal. code, hours, corrective action)";
                     }
+
+                    // Extract cell values
+                    double xdttm = fromDateTimeToJulian(getCellValueAsString(row.getCell(0)));
+                    String xname = getCellValueAsString(row.getCell(1)).trim();
+                    String xnomen = getCellValueAsString(row.getCell(2)).trim();
+                    String xmal_cd = getCellValueAsString(row.getCell(3)).trim();
+                    double xhours = Double.parseDouble(getCellValueAsString(row.getCell(4)));
+                    String xcorr_act = getCellValueAsString(row.getCell(5));
+
+
+                    String workerEntryInsert = "INSERT INTO worker_entry(dttm, name, nomen, mal_cd, hours, corr_act) VALUES (?, ?, ?, ?, ?, ?)";
+                    try (PreparedStatement ps = conn.prepareStatement(workerEntryInsert)) {
+                        ps.setDouble(1, xdttm);
+                        ps.setString(2, xname);
+                        ps.setString(3, xnomen);
+                        ps.setString(4, xmal_cd);
+                        ps.setDouble(5, xhours);
+                        ps.setString(6, xcorr_act);
+
+                        if (ps.executeUpdate() == 1) {
+                            updatesMade++;
+                        } else {
+                            System.out.println("Failed to insert: " + xname + " " + xnomen + " " + xmal_cd);
+                        }
+                    }
+
+                    totalLines++;
                 }
 
-                totalLines++;
+                conn.commit();
             }
-
-            conn.commit();
-            workbook.close();
-            file.close();
 
             System.out.println("Update Success: " + updatesMade + " entries updated out of " + totalLines);
             return "Update Success: " + updatesMade + " entries updated out of " + totalLines;
