@@ -1,10 +1,10 @@
 # M11TechLogApp
 
-M11TechLogApp is a macOS desktop application for managing nondestructive inspection (NDI) tech log records. It is built with Java 22, JavaFX, SQLite, Apache POI, and PDFBox.
+M11TechLogApp is a desktop application for managing nondestructive inspection (NDI) tech log records. It is built with Java 22, JavaFX, SQLite, Apache POI, and PDFBox.
 
 The app lets users import or enter inspection records, search the database, generate filtered log views, and export completed NDI Tech Log and Detailed Tech Log PDFs.
 
-> Current target: macOS on Apple Silicon. The Maven configuration uses JavaFX `mac-aarch64` artifacts.
+> Current targets: macOS and Windows. Maven selects the JavaFX native artifacts for the build host automatically.
 
 ## Features
 
@@ -20,7 +20,7 @@ The app lets users import or enter inspection records, search the database, gene
 
 ## Requirements
 
-- macOS on Apple Silicon
+- Windows 10/11 or macOS
 - JDK 22
 - Maven, or the included Maven wrapper
 - SQLite database file named `worker_entry.db`
@@ -31,6 +31,12 @@ From the project root:
 
 ```bash
 ./mvnw javafx:run
+```
+
+On Windows:
+
+```powershell
+.\mvnw.cmd javafx:run
 ```
 
 If your local Maven installation is configured for Java 22, this also works:
@@ -71,6 +77,28 @@ jpackage \
 
 The Maven build copies `src/main/jpackage/worker_entry.db` into `target`, so `jpackage --input target` includes the starter database in the app image.
 
+## Packaging for Windows
+
+Build the shaded JAR:
+
+```powershell
+.\mvnw.cmd clean package
+```
+
+Create a Windows app image:
+
+```powershell
+jpackage `
+  --type app-image `
+  --name M11TechLogApp `
+  --input target `
+  --main-jar M11TechLogApp-shaded.jar `
+  --main-class org.example.m11techlogapp.Launcher `
+  --dest .
+```
+
+The Windows build uses JavaFX `win` artifacts automatically. Add `--icon path\to\icon.ico` if a Windows `.ico` icon is available.
+
 ## Database
 
 The app uses SQLite and stores records in the `worker_entry` table.
@@ -87,7 +115,19 @@ When running from a packaged `.app`, the app looks for:
 ~/Library/Application Support/M11TechLogApp/worker_entry.db
 ```
 
-On first launch, the packaged app copies the starter database from the app bundle into that writable Application Support location. This avoids writing records into `M11TechLogApp.app/Contents/Resources`, which macOS may treat as read-only after download or installation.
+When running from a packaged Windows app image, the app looks for:
+
+```text
+%APPDATA%\M11TechLogApp\worker_entry.db
+```
+
+If `%APPDATA%` is unavailable, it falls back to:
+
+```text
+%LOCALAPPDATA%\M11TechLogApp\worker_entry.db
+```
+
+On first launch, the packaged app copies the starter database from the app bundle or Windows app image into the writable user data location. This avoids writing records into platform install directories, which may be read-only after download or installation.
 
 ### Schema
 
@@ -177,4 +217,4 @@ src/main/jpackage/
 - Maven artifact: `M11TechLogApp`
 - Shaded JAR output: `target/M11TechLogApp-shaded.jar`
 - Local runtime databases and packaged build outputs are ignored by Git.
-- The current dependency setup is macOS Apple Silicon specific. Windows or Intel macOS support will require updating the JavaFX classifiers in `pom.xml`.
+- JavaFX classifiers are selected with Maven profiles: `mac-aarch64`, `mac-x64`, `windows`, and `linux`.

@@ -1,6 +1,5 @@
 package org.example.m11techlogapp.model;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -8,8 +7,11 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Locale;
 
 public class ConnectDB {
+    private static final String APP_NAME = "M11TechLogApp";
+    private static final String DB_FILE_NAME = "worker_entry.db";
     private Connection conn;
     private static final String DB_FILE_PATH;
     private static final String DB_URL;
@@ -39,39 +41,102 @@ public class ConnectDB {
     }
 
     private static String resolveDatabasePath() throws IOException, URISyntaxException {
-        File appLocation = new File(ConnectDB.class
+        Path appLocation = Path.of(ConnectDB.class
                 .getProtectionDomain()
                 .getCodeSource()
                 .getLocation()
                 .toURI());
 
-        File contentsDir = appLocation.getParentFile() == null ? null : appLocation.getParentFile().getParentFile();
-        if (contentsDir != null && "Contents".equals(contentsDir.getName())) {
-            Path userDatabase = Path.of(
-                    System.getProperty("user.home"),
-                    "Library",
-                    "Application Support",
-                    "M11TechLogApp",
-                    "worker_entry.db"
-            );
-
-            if (Files.notExists(userDatabase)) {
-                Files.createDirectories(userDatabase.getParent());
-
-                Path bundledDatabase = contentsDir.toPath().resolve("Resources").resolve("worker_entry.db");
-                Path bundledJavaDatabase = contentsDir.toPath().resolve("Java").resolve("worker_entry.db");
-
-                if (Files.exists(bundledDatabase)) {
-                    Files.copy(bundledDatabase, userDatabase);
-                } else if (Files.exists(bundledJavaDatabase)) {
-                    Files.copy(bundledJavaDatabase, userDatabase);
-                }
-            }
+        Path macContentsDir = getMacAppContentsDirectory(appLocation);
+        if (macContentsDir != null) {
+            Path userDatabase = getUserDataDirectory().resolve(DB_FILE_NAME);
+            copyStarterDatabaseIfNeeded(userDatabase,
+                    macContentsDir.resolve("Resources").resolve(DB_FILE_NAME),
+                    macContentsDir.resolve("Java").resolve(DB_FILE_NAME));
 
             return userDatabase.toString();
         }
 
-        return System.getProperty("user.dir") + File.separator + "worker_entry.db";
+        Path windowsAppDir = getWindowsAppDirectory(appLocation);
+        if (windowsAppDir != null) {
+            Path userDatabase = getUserDataDirectory().resolve(DB_FILE_NAME);
+            copyStarterDatabaseIfNeeded(userDatabase, windowsAppDir.resolve(DB_FILE_NAME));
+
+            return userDatabase.toString();
+        }
+
+        return Path.of(System.getProperty("user.dir"), DB_FILE_NAME).toString();
+    }
+
+    private static Path getMacAppContentsDirectory(Path appLocation) {
+        Path parent = appLocation.getParent();
+        Path contentsDir = parent == null ? null : parent.getParent();
+        if (contentsDir != null && "Contents".equals(contentsDir.getFileName().toString())) {
+            return contentsDir;
+        }
+
+        return null;
+    }
+
+    private static Path getWindowsAppDirectory(Path appLocation) {
+        if (!isWindows()) {
+            return null;
+        }
+
+        Path appDir = Files.isDirectory(appLocation) ? appLocation : appLocation.getParent();
+        if (appDir != null && "app".equalsIgnoreCase(appDir.getFileName().toString())) {
+            return appDir;
+        }
+
+        return null;
+    }
+
+    private static Path getUserDataDirectory() {
+        if (isWindows()) {
+            String appData = System.getenv("APPDATA");
+            if (appData != null && !appData.isBlank()) {
+                return Path.of(appData, APP_NAME);
+            }
+
+            String localAppData = System.getenv("LOCALAPPDATA");
+            if (localAppData != null && !localAppData.isBlank()) {
+                return Path.of(localAppData, APP_NAME);
+            }
+        }
+
+        if (isMac()) {
+            return Path.of(System.getProperty("user.home"), "Library", "Application Support", APP_NAME);
+        }
+
+        String xdgDataHome = System.getenv("XDG_DATA_HOME");
+        if (xdgDataHome != null && !xdgDataHome.isBlank()) {
+            return Path.of(xdgDataHome, APP_NAME);
+        }
+
+        return Path.of(System.getProperty("user.home"), "." + APP_NAME);
+    }
+
+    private static void copyStarterDatabaseIfNeeded(Path userDatabase, Path... starterDatabases) throws IOException {
+        if (Files.exists(userDatabase)) {
+            return;
+        }
+
+        Files.createDirectories(userDatabase.getParent());
+
+        for (Path starterDatabase : starterDatabases) {
+            if (Files.exists(starterDatabase)) {
+                Files.copy(starterDatabase, userDatabase);
+                return;
+            }
+        }
+    }
+
+    private static boolean isMac() {
+        return System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("mac");
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
     }
 
     private void ensureDatabaseInitialized() throws SQLException {
