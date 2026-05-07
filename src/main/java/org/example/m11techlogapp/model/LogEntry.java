@@ -1,4 +1,4 @@
-package org.example.m11techlogapp;
+package org.example.m11techlogapp.model;
 
 public class LogEntry {
     private String dttm;

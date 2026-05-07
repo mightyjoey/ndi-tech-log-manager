@@ -12,22 +12,22 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
-import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
-import org.example.m11techlogapp.LogEntry;
+import org.example.m11techlogapp.util.AnnualLogPeriod;
+import org.example.m11techlogapp.model.InspectionMethod;
+import org.example.m11techlogapp.model.LogEntry;
+import org.example.m11techlogapp.service.LogEntryService;
+import org.example.m11techlogapp.service.PdfLogExporter;
 import org.example.m11techlogapp.model.ConnectDB;
-import org.example.m11techlogapp.model.DBController;
+import org.example.m11techlogapp.model.LogEntryRepository;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.MonthDay;
 import java.util.*;
 
-import static org.example.m11techlogapp.DateUtils.fromDateToJulian;
-import static org.example.m11techlogapp.DateUtils.fromJulianToDateString;
+import static org.example.m11techlogapp.util.DateUtils.fromJulianToDateString;
 
 public class OutputLogController {
 
@@ -77,10 +77,6 @@ public class OutputLogController {
 
     public void trackNames(ArrayList<String> names){
         this.selectedNames = names;
-    }
-
-    public void setAnnualLogStartDate(LocalDate annualLogStartDate) {
-        this.annualLogStartDate = annualLogStartDate;
     }
 
     public void setGenerateLogState(LocalDate beginDate, LocalDate endDate, boolean splitAnnually, LocalDate anniversaryDate) {
@@ -161,8 +157,8 @@ public class OutputLogController {
 
         if (result.get() == yesButton) {
             ConnectDB connectDB = new ConnectDB();
-            DBController dbController = new DBController(connectDB);
-            String output = dbController.deleteEntry(
+            LogEntryRepository logEntryRepository = new LogEntryRepository(connectDB);
+            String output = logEntryRepository.deleteEntry(
                     Double.parseDouble(entry.getDttm()),
                     entry.getName(),
                     entry.getNomen(),
@@ -222,7 +218,7 @@ public class OutputLogController {
         exportFile(newFolder, "Detailed_Tech_Log.pdf", logEntries2, "detailedLog.pdf");
     }
 
-    public void fillDetailedPDF(PDAcroForm acroForm) throws IOException {
+    public void fillDetailedPDF(PDAcroForm acroForm, LinkedList<LogEntry> entries) throws IOException {
         int count = 1;
         while (count < 11){
             PDField date = acroForm.getField("DATE_"+count);
@@ -231,8 +227,8 @@ public class OutputLogController {
             PDField hours = acroForm.getField("HOURS_"+count);
             PDField corrAct = acroForm.getField("undefined_"+count);
 
-            if (!logEntries2.isEmpty()){
-                LogEntry logEntry = logEntries2.poll();
+            if (!entries.isEmpty()){
+                LogEntry logEntry = entries.poll();
                 date.setValue(fromJulianToDateString(logEntry.getDttm()));
                 name.setValue(logEntry.getName());
                 nomen.setValue(logEntry.getNomen());
@@ -245,9 +241,9 @@ public class OutputLogController {
         }
     }
 
-    public void fillDetailedPDFSplitByYear(PDAcroForm acroForm, MonthDay splitDate) throws IOException {
-        LocalDate firstRecordDate = LocalDate.parse(fromJulianToDateString(logEntries2.getFirst().getDttm()));
-        LocalDate periodStartDate = getAnnualPeriodStart(firstRecordDate, splitDate);
+    public void fillDetailedPDFSplitByYear(PDAcroForm acroForm, LinkedList<LogEntry> entries, MonthDay splitDate) throws IOException {
+        LocalDate firstRecordDate = LocalDate.parse(fromJulianToDateString(entries.getFirst().getDttm()));
+        LocalDate periodStartDate = AnnualLogPeriod.startFor(firstRecordDate, splitDate);
         LocalDate nextPeriodStartDate = periodStartDate.plusYears(1);
 
         int count = 1;
@@ -258,13 +254,13 @@ public class OutputLogController {
             PDField hours = acroForm.getField("HOURS_"+count);
             PDField corrAct = acroForm.getField("undefined_"+count);
 
-            if (!logEntries2.isEmpty()){
-                LocalDate nextEntryDate = LocalDate.parse(fromJulianToDateString(logEntries2.peek().getDttm()));
+            if (!entries.isEmpty()){
+                LocalDate nextEntryDate = LocalDate.parse(fromJulianToDateString(entries.peek().getDttm()));
                 if (!nextEntryDate.isBefore(nextPeriodStartDate)) {
                     break;
                 }
 
-                LogEntry logEntry = logEntries2.poll();
+                LogEntry logEntry = entries.poll();
                 date.setValue(fromJulianToDateString(logEntry.getDttm()));
                 name.setValue(logEntry.getName());
                 nomen.setValue(logEntry.getNomen());
@@ -277,7 +273,7 @@ public class OutputLogController {
         }
     }
 
-    public void fillPDFSplitByYear(PDAcroForm acroForm, MonthDay splitDate) throws IOException {
+    public void fillPDFSplitByYear(PDAcroForm acroForm, LinkedList<LogEntry> entries, String methodName, MonthDay splitDate) throws IOException {
 
         PDField name = acroForm.getField("1 NAME");
         if (!nameField.getText().isEmpty()) {
@@ -294,8 +290,8 @@ public class OutputLogController {
             organization.setValue(organizationField.getText());
         }else{ organization.setValue(""); }
 
-        LocalDate firstRecordDate = LocalDate.parse(fromJulianToDateString(logEntries.getFirst().getDttm()));
-        LocalDate periodStartDate = getAnnualPeriodStart(firstRecordDate, splitDate);
+        LocalDate firstRecordDate = LocalDate.parse(fromJulianToDateString(entries.getFirst().getDttm()));
+        LocalDate periodStartDate = AnnualLogPeriod.startFor(firstRecordDate, splitDate);
         LocalDate nextPeriodStartDate = periodStartDate.plusYears(1);
 
         int count = 1;
@@ -306,20 +302,20 @@ public class OutputLogController {
             PDField hours = acroForm.getField("8 hoursRow"+count);
             PDField remarks = acroForm.getField("9 REMARKSrow"+count);
 
-            if (!logEntries.isEmpty()){
-                LocalDate nextEntryDate = LocalDate.parse(fromJulianToDateString(logEntries.peek().getDttm()));
+            if (!entries.isEmpty()){
+                LocalDate nextEntryDate = LocalDate.parse(fromJulianToDateString(entries.peek().getDttm()));
                 if (!nextEntryDate.isBefore(nextPeriodStartDate)) {
                     break;
                 }
 
-                LogEntry logEntry = logEntries.poll();
+                LogEntry logEntry = entries.poll();
                 currentDate = fromJulianToDateString(logEntry.getDttm());
                 if (count == 1) {
                     PDField startDate = acroForm.getField("4 DATE IN");
                     startDate.setValue(currentDate);
                 }
                 date.setValue(currentDate);
-                method.setValue(this.method);
+                method.setValue(methodName);
                 hours.setValue(logEntry.getHours());
                 remarks.setValue(logEntry.getNomen());
             }else{
@@ -332,75 +328,11 @@ public class OutputLogController {
         endDate.setValue(currentDate);
     }
 
-    private LocalDate getAnnualPeriodStart(LocalDate entryDate, MonthDay splitDate) {
-        LocalDate periodStart = splitDate.atYear(entryDate.getYear());
-        if (entryDate.isBefore(periodStart)) {
-            periodStart = splitDate.atYear(entryDate.getYear() - 1);
-        }
-        return periodStart;
-    }
-
     private boolean isAllInspectionsLog() {
-        return "All Inspections".equals(selectedMethod);
+        return InspectionMethod.isAllInspections(selectedMethod);
     }
 
-    private Map<String, LinkedList<LogEntry>> groupByInspectionMethod(List<LogEntry> sourceEntries) {
-        Map<String, LinkedList<LogEntry>> groupedEntries = new LinkedHashMap<>();
-        groupedEntries.put("Eddy Current", new LinkedList<>());
-        groupedEntries.put("Liquid Penetrant", new LinkedList<>());
-        groupedEntries.put("Magnetic Particle", new LinkedList<>());
-        groupedEntries.put("Radiographic", new LinkedList<>());
-        groupedEntries.put("Ultrasonic", new LinkedList<>());
-        groupedEntries.put("Other", new LinkedList<>());
-
-        for (LogEntry entry : sourceEntries) {
-            for (String inspectionMethod : getInspectionMethodsForEntry(entry)) {
-                groupedEntries.get(inspectionMethod).add(entry);
-            }
-        }
-
-        return groupedEntries;
-    }
-
-    private List<String> getInspectionMethodsForEntry(LogEntry entry) {
-        return switch (entry.getMal_cd()) {
-            case "572" -> List.of("Eddy Current");
-            case "576" -> List.of("Liquid Penetrant");
-            case "571" -> List.of("Magnetic Particle");
-            case "570" -> List.of("Radiographic");
-            case "575" -> List.of("Ultrasonic");
-            default -> getInspectionMethodsFromCorrectiveAction(entry.getCorr_act());
-        };
-    }
-
-    private List<String> getInspectionMethodsFromCorrectiveAction(String correctiveAction) {
-        List<String> inspectionMethods = new ArrayList<>();
-        String text = correctiveAction == null ? "" : " " + correctiveAction.toUpperCase() + " ";
-
-        if (text.contains(" EDDY CURRENT") || text.contains(" ET ")) {
-            inspectionMethods.add("Eddy Current");
-        }
-        if (text.contains(" PENETRANT") || text.contains(" PT ")) {
-            inspectionMethods.add("Liquid Penetrant");
-        }
-        if (text.contains(" MAG PARTICLE") || text.contains(" MT ")) {
-            inspectionMethods.add("Magnetic Particle");
-        }
-        if (text.contains(" RADIOGRAPHIC") || text.contains(" RT ")) {
-            inspectionMethods.add("Radiographic");
-        }
-        if (text.contains(" ULTRASONIC") || text.contains(" UT ")) {
-            inspectionMethods.add("Ultrasonic");
-        }
-
-        if (inspectionMethods.isEmpty()) {
-            inspectionMethods.add("Other");
-        }
-
-        return inspectionMethods;
-    }
-
-    public void fillPDF(PDAcroForm acroForm) throws IOException {
+    public void fillPDF(PDAcroForm acroForm, LinkedList<LogEntry> entries, String methodName) throws IOException {
         PDField name = acroForm.getField("1 NAME");
         if (!nameField.getText().isEmpty()) {
             name.setValue(nameField.getText());
@@ -417,7 +349,7 @@ public class OutputLogController {
         }else{ organization.setValue(""); }
 
         PDField startDate = acroForm.getField("4 DATE IN");
-        startDate.setValue(fromJulianToDateString(logEntries.getFirst().getDttm()));
+        startDate.setValue(fromJulianToDateString(entries.getFirst().getDttm()));
 
         int count = 1;
         String currentDate = "NA";
@@ -427,15 +359,15 @@ public class OutputLogController {
             PDField hours = acroForm.getField("8 hoursRow"+count);
             PDField remarks = acroForm.getField("9 REMARKSrow"+count);
 
-            if (!logEntries.isEmpty()){
-                LogEntry logEntry = logEntries.poll();
+            if (!entries.isEmpty()){
+                LogEntry logEntry = entries.poll();
                 currentDate = fromJulianToDateString(logEntry.getDttm());
                 date.setValue(currentDate);
                 if (count == 21){
                     PDField endDate = acroForm.getField("4 DATE OUT");
                     endDate.setValue(currentDate);
                 }
-                method.setValue(this.method);
+                method.setValue(methodName);
                 hours.setValue(logEntry.getHours());
                 remarks.setValue(logEntry.getNomen());
             }else{
@@ -448,19 +380,7 @@ public class OutputLogController {
     }
 
     public void initializeMalCd(MouseEvent event) {
-        malCdField.setItems(FXCollections.observableArrayList("Eddy Current", "Liquid Penetrant", "Magnetic Particle", "Radiographic", "Ultrasonic", "0", "Other"));
-    }
-
-    private String selectMethod(String method) {
-        return switch (method) {
-            case "Eddy Current" -> "572";
-            case "Liquid Penetrant" -> "576";
-            case "Magnetic Particle" -> "571";
-            case "Radiographic" -> "570";
-            case "Ultrasonic" -> "575";
-            case "Other" -> "579";
-            default -> "0";
-        };
+        malCdField.setItems(FXCollections.observableArrayList(InspectionMethod.recordMethodOptions()));
     }
 
     public void addIndividualRecord(javafx.event.ActionEvent event) throws IOException {
@@ -468,22 +388,18 @@ public class OutputLogController {
             showAlert(Alert.AlertType.INFORMATION, "Error", "fill all fields");
             return;
         }
-        double date = fromDateToJulian(dttmField.getValue());
-        String name = newNameField.getText().toUpperCase();
-        String nomen = nomenField.getText().toUpperCase();
-        String mal = selectMethod(malCdField.getValue());
-        double hours = hoursField.getValue();
-        String corrAct = corrActField.getText().toUpperCase();
+        LogEntryService.AddRecordResult result = new LogEntryService().addRecord(
+                dttmField.getValue(),
+                newNameField.getText(),
+                nomenField.getText(),
+                malCdField.getValue(),
+                hoursField.getValue(),
+                corrActField.getText());
 
-        ConnectDB connectDB = new ConnectDB();
-        DBController dbController = new DBController(connectDB);
-        String result  = dbController.insertEntry(date, name, nomen, mal, hours, corrAct);
-        connectDB.close();
+        showAlert(Alert.AlertType.INFORMATION, "Status", result.message());
 
-        showAlert(Alert.AlertType.INFORMATION, "Status", result);
-
-        if (result.equals("update success")){
-            LogEntry entry = new LogEntry(String.valueOf(date),name,nomen,mal,String.valueOf(hours),corrAct);
+        if (result.isSuccess()){
+            LogEntry entry = result.entry();
             ObservableList<LogEntry> observableList = tableView.getItems();
             observableList.add(entry);
             FXCollections.sort(observableList, Comparator.comparing(LogEntry::getDttm));
@@ -512,133 +428,29 @@ public class OutputLogController {
     }
 
     private void exportFile(File newFolder, String newPdfName, List<LogEntry> logEntriesList, String pdfSource) throws IOException {
-
-        // Create a PDFMergerUtility
-        PDFMergerUtility merger = new PDFMergerUtility();
-        File outputFile = new File(newFolder, newPdfName);
-        merger.setDestinationFileName(outputFile.getAbsolutePath());
-
-        int pageCount = 1;
-
         try {
-            if (newPdfName.equals("NDI_Tech_Log.pdf") && isAllInspectionsLog()) {
-                String originalMethod = this.method;
-                LinkedList<LogEntry> originalLogEntries = this.logEntries;
-
-                for (Map.Entry<String, LinkedList<LogEntry>> methodEntries : groupByInspectionMethod(logEntriesList).entrySet()) {
-                    if (methodEntries.getValue().isEmpty()) {
-                        continue;
-                    }
-
-                    this.method = methodEntries.getKey();
-                    this.logEntries = methodEntries.getValue();
-
-                    while (!this.logEntries.isEmpty()) {
-                        try (InputStream templateStream = getClass().getClassLoader().getResourceAsStream(pdfSource);
-                             PDDocument document = PDDocument.load(templateStream)) {
-
-                            PDAcroForm acroForm = document.getDocumentCatalog().getAcroForm();
-
-                            if (annualLogStartDate == null) {
-                                fillPDF(acroForm);
+            new PdfLogExporter().export(
+                    newFolder,
+                    newPdfName,
+                    new ArrayList<>(logEntriesList),
+                    pdfSource,
+                    isAllInspectionsLog(),
+                    method,
+                    annualLogStartDate,
+                    getClass(),
+                    (acroForm, entries, methodName, splitDate) -> {
+                        if (newPdfName.equals("NDI_Tech_Log.pdf")) {
+                            if (splitDate == null) {
+                                fillPDF(acroForm, entries, methodName);
                             } else {
-                                fillPDFSplitByYear(acroForm, MonthDay.from(annualLogStartDate));
+                                fillPDFSplitByYear(acroForm, entries, methodName, splitDate);
                             }
-
-                            if (acroForm != null) {
-                                acroForm.flatten();
-                            }
-
-                            File tempPage = File.createTempFile("page_" + pageCount++, ".pdf");
-                            tempPage.deleteOnExit();
-                            document.save(tempPage);
-                            merger.addSource(tempPage);
-                        }
-                    }
-                }
-
-                this.method = originalMethod;
-                this.logEntries = originalLogEntries;
-                logEntriesList.clear();
-            }
-
-            if (newPdfName.equals("Detailed_Tech_Log.pdf") && isAllInspectionsLog()) {
-                LinkedList<LogEntry> originalLogEntries = this.logEntries2;
-
-                for (Map.Entry<String, LinkedList<LogEntry>> methodEntries : groupByInspectionMethod(logEntriesList).entrySet()) {
-                    if (methodEntries.getValue().isEmpty()) {
-                        continue;
-                    }
-
-                    this.logEntries2 = methodEntries.getValue();
-
-                    while (!this.logEntries2.isEmpty()) {
-                        try (InputStream templateStream = getClass().getClassLoader().getResourceAsStream(pdfSource);
-                             PDDocument document = PDDocument.load(templateStream)) {
-
-                            PDAcroForm acroForm = document.getDocumentCatalog().getAcroForm();
-
-                            if (annualLogStartDate == null) {
-                                fillDetailedPDF(acroForm);
-                            } else {
-                                fillDetailedPDFSplitByYear(acroForm, MonthDay.from(annualLogStartDate));
-                            }
-
-                            if (acroForm != null) {
-                                acroForm.flatten();
-                            }
-
-                            File tempPage = File.createTempFile("page_" + pageCount++, ".pdf");
-                            tempPage.deleteOnExit();
-                            document.save(tempPage);
-                            merger.addSource(tempPage);
-                        }
-                    }
-                }
-
-                this.logEntries2 = originalLogEntries;
-                logEntriesList.clear();
-            }
-
-            while (!logEntriesList.isEmpty()) {
-
-                // Load template from resources (classpath)
-                try (InputStream templateStream = getClass().getClassLoader().getResourceAsStream(pdfSource);
-                     PDDocument document = PDDocument.load(templateStream)) {
-
-                    PDAcroForm acroForm = document.getDocumentCatalog().getAcroForm();
-
-                    if (newPdfName.equals("NDI_Tech_Log.pdf")) {
-                        if (annualLogStartDate == null) {
-                            fillPDF(acroForm);
+                        } else if (splitDate == null) {
+                            fillDetailedPDF(acroForm, entries);
                         } else {
-                            fillPDFSplitByYear(acroForm, MonthDay.from(annualLogStartDate));
+                            fillDetailedPDFSplitByYear(acroForm, entries, splitDate);
                         }
-                    } else {
-                        if (annualLogStartDate == null) {
-                            fillDetailedPDF(acroForm);
-                        } else {
-                            fillDetailedPDFSplitByYear(acroForm, MonthDay.from(annualLogStartDate));
-                        }
-                    }
-
-                    if (acroForm != null) {
-                        acroForm.flatten();
-                    }
-
-                    // Write the filled PDF to a temporary file
-                    File tempPage = File.createTempFile("page_" + pageCount++, ".pdf");
-                    tempPage.deleteOnExit();
-                    document.save(tempPage);
-
-                    // Add to the merger
-                    merger.addSource(tempPage);
-                }
-            }
-
-            // Merge all filled PDFs into one
-            merger.mergeDocuments(null);
-            System.out.println("Saved merged PDF: " + outputFile.getAbsolutePath());
+                    });
 
             if (newPdfName.equals("NDI_Tech_Log.pdf")) {
                 this.logEntries = new LinkedList<>(entries);

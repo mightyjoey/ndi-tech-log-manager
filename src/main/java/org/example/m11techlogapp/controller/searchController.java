@@ -12,14 +12,14 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-import org.example.m11techlogapp.LogEntry;
+import org.example.m11techlogapp.model.LogEntry;
 import org.example.m11techlogapp.model.ConnectDB;
-import org.example.m11techlogapp.model.DBController;
+import org.example.m11techlogapp.model.LogEntryRepository;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-import static org.example.m11techlogapp.DateUtils.fromJulianToDateString;
+import static org.example.m11techlogapp.util.DateUtils.fromJulianToDateString;
 
 public class searchController {
 
@@ -36,9 +36,9 @@ public class searchController {
         String searchText = textSearch.getText();
 
         ConnectDB connectDB = new ConnectDB();
-        DBController dbController = new DBController(connectDB);
+        LogEntryRepository logEntryRepository = new LogEntryRepository(connectDB);
 
-        List<LogEntry> logEntries = dbController.searchForKeyword(searchText);
+        List<LogEntry> logEntries = logEntryRepository.searchForKeyword(searchText);
         connectDB.close();
 
         TableColumn<LogEntry, String> dateColumn = new TableColumn<>("DATE");

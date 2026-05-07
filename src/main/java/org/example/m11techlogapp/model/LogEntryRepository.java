@@ -5,19 +5,18 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.example.m11techlogapp.LogEntry;
 
 import java.io.*;
 import java.sql.*;
 import java.util.*;
 
-import static org.example.m11techlogapp.DateUtils.fromDateTimeToJulian;
+import static org.example.m11techlogapp.util.DateUtils.fromDateTimeToJulian;
 
-public class DBController {
+public class LogEntryRepository {
 
     private ConnectDB connection;
 
-    public DBController(ConnectDB connection) {
+    public LogEntryRepository(ConnectDB connection) {
         this.connection = connection;
     }
 
@@ -158,39 +157,31 @@ public class DBController {
         return distinctNames;
     }
 
-    private String selectMethodConditions(String method) {
-        return switch (method) {
-            case "Eddy Current" -> "(mal_cd = '572' OR" +
-                    " (corr_act like '% ET %' or corr_act like '%EDDY CURRENT%'))";
-            case "Liquid Penetrant" -> "(mal_cd = '576' OR" +
-                    " (corr_act like '% PT %' or corr_act like '%PENETRANT%'))";
-            case "Magnetic Particle" -> "(mal_cd = '571' OR" +
-                    " (corr_act like '% MT %' or corr_act like '%MAG PARTICLE%'))";
-            case "Radiographic" -> "(mal_cd = '570' OR" +
-                    " (corr_act like '% RT %' or corr_act like '%RADIOGRAPHIC%'))";
-            case "Ultrasonic" -> "(mal_cd = '575' OR" +
-                    " (corr_act like '% UT %' or corr_act like '%ULTRASONIC%'))";
-            case "All Inspections" -> "(mal_cd IN ('570', '571', '572', '573', '575', '576', '579', '0'))";
-            default -> null;
-        };
-    }
-
-    public List<LogEntry> getWorkerEntries(String method, String distinctNames, double beginDate, double endDate) {
+    public List<LogEntry> getWorkerEntries(String method, List<String> names, double beginDate, double endDate) {
         List<LogEntry> logEntries = new ArrayList<>();
+        if (names.isEmpty()) {
+            return logEntries;
+        }
 
+        String namePlaceholders = String.join(", ", Collections.nCopies(names.size(), "?"));
         String sql = "SELECT dttm, name, nomen, mal_cd, hours, corr_act " +
-                "FROM worker_entry " +
-                "WHERE name in " + distinctNames +
-                " AND dttm BETWEEN " + beginDate + " AND " + endDate +
-                " AND " + selectMethodConditions(method);
+                "FROM worker_entry WHERE name IN (" + namePlaceholders + ") " +
+                "AND dttm BETWEEN ? AND ? " +
+                "AND " + methodCondition(method);
 
         System.out.println(sql);
 
-        try (Connection conn = connection.getConnection()) {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+        try (Connection conn = connection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            // Iterate over the ResultSet and create LogEntry objects
+            int parameterIndex = 1;
+            for (String name : names) {
+                ps.setString(parameterIndex++, name);
+            }
+            ps.setDouble(parameterIndex++, beginDate);
+            ps.setDouble(parameterIndex, endDate);
+
+            ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 String date = rs.getString("dttm");
                 String name = rs.getString("name");
@@ -208,6 +199,24 @@ public class DBController {
         }
 
         return logEntries;  // Return the list of log entries
+    }
+
+    private String methodCondition(String method) {
+        if (InspectionMethod.isAllInspections(method)) {
+            return "mal_cd IN ('570', '571', '572', '573', '575', '576', '579', '0')";
+        }
+
+        InspectionMethod inspectionMethod = InspectionMethod.fromDisplayName(method);
+        if (inspectionMethod == null) {
+            return "1 = 0";
+        }
+
+        List<String> conditions = new ArrayList<>();
+        conditions.add("mal_cd = '" + inspectionMethod.malCode() + "'");
+        for (String pattern : inspectionMethod.correctiveActionLikePatterns()) {
+            conditions.add("corr_act LIKE '" + pattern + "'");
+        }
+        return "(" + String.join(" OR ", conditions) + ")";
     }
 
     public List<LogEntry> searchForKeyword(String keyword) {
