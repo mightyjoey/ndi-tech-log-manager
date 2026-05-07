@@ -13,6 +13,7 @@ public class ConnectDB {
     private static final String APP_NAME = "M11TechLogApp";
     private static final String DB_FILE_NAME = "worker_entry.db";
     private Connection conn;
+    private final String dbUrl;
     private static final String DB_FILE_PATH;
     private static final String DB_URL;
 
@@ -27,9 +28,14 @@ public class ConnectDB {
     }
 
     public ConnectDB() {
+        this(DB_URL);
+    }
+
+    ConnectDB(String dbUrl) {
+        this.dbUrl = dbUrl;
         try {
-            System.out.println("Connecting to DB at: " + DB_FILE_PATH);
-            conn = DriverManager.getConnection(DB_URL);
+            System.out.println("Connecting to DB at: " + dbUrl);
+            conn = DriverManager.getConnection(dbUrl);
             ensureDatabaseInitialized();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -37,7 +43,11 @@ public class ConnectDB {
     }
 
     public Connection getConnection() {
-        return conn;
+        try {
+            return DriverManager.getConnection(dbUrl);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static String resolveDatabasePath() throws IOException, URISyntaxException {

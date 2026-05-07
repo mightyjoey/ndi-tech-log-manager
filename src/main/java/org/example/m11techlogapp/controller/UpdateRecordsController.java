@@ -10,15 +10,15 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.example.m11techlogapp.model.DBController;
+import org.example.m11techlogapp.model.InspectionMethod;
+import org.example.m11techlogapp.service.LogEntryService;
+import org.example.m11techlogapp.model.LogEntryRepository;
 import org.example.m11techlogapp.model.ConnectDB;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Optional;
-
-import static org.example.m11techlogapp.DateUtils.fromDateToJulian;
 
 public class UpdateRecordsController {
 
@@ -54,8 +54,8 @@ public class UpdateRecordsController {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.get() == ButtonType.OK) {
             ConnectDB connectDB = new ConnectDB();
-            DBController dbController = new DBController(connectDB);
-            dbController.clearDB();
+            LogEntryRepository logEntryRepository = new LogEntryRepository(connectDB);
+            logEntryRepository.clearDB();
             connectDB.close();
 
             Alert alert2 = new Alert(Alert.AlertType.INFORMATION);
@@ -74,9 +74,9 @@ public class UpdateRecordsController {
         File selectedFile = fileChooser.showOpenDialog(stage);
         if (selectedFile != null) {
             ConnectDB connectDB = new ConnectDB();
-            DBController dbController = new DBController(connectDB);
+            LogEntryRepository logEntryRepository = new LogEntryRepository(connectDB);
             String filePath = selectedFile.getAbsolutePath();
-            String result = dbController.updateDB3(filePath);
+            String result = logEntryRepository.updateDB3(filePath);
             connectDB.close();
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -103,25 +103,21 @@ public class UpdateRecordsController {
             alert.showAndWait();
             return;
         }
-        double date = fromDateToJulian(dttmField.getValue());
-        String name = nameField.getText().toUpperCase();
-        String nomen = nomenField.getText().toUpperCase();
-        String mal = selectMethod(malCdField.getValue());
-        double hours = hoursField.getValue();
-        String corrAct = corrActField.getText().toUpperCase();
+        LogEntryService.AddRecordResult result = new LogEntryService().addRecord(
+                dttmField.getValue(),
+                nameField.getText(),
+                nomenField.getText(),
+                malCdField.getValue(),
+                hoursField.getValue(),
+                corrActField.getText());
 
-        ConnectDB connectDB = new ConnectDB();
-        DBController dbController = new DBController(connectDB);
-
-        String result  = dbController.insertEntry(date, name, nomen, mal, hours, corrAct);
-        connectDB.close();
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Update Complete");
         alert.setHeaderText(null);
-        alert.setContentText(result);
+        alert.setContentText(result.message());
         alert.showAndWait();
 
-        if (result.equals("update success")){
+        if (result.isSuccess()){
             dttmField.setValue(null);
             nameField.setText(null);
             nomenField.setText(null);
@@ -131,19 +127,7 @@ public class UpdateRecordsController {
     }
 
     public void initializeMalCd(MouseEvent event) {
-        malCdField.setItems(FXCollections.observableArrayList("Eddy Current", "Liquid Penetrant", "Magnetic Particle", "Radiographic", "Ultrasonic", "0", "Other"));
-    }
-
-    private String selectMethod(String method) {
-        return switch (method) {
-            case "Eddy Current" -> "572";
-            case "Liquid Penetrant" -> "576";
-            case "Magnetic Particle" -> "571";
-            case "Radiographic" -> "570";
-            case "Ultrasonic" -> "575";
-            case "Other" -> "579";
-            default -> "0";
-        };
+        malCdField.setItems(FXCollections.observableArrayList(InspectionMethod.recordMethodOptions()));
     }
 
 

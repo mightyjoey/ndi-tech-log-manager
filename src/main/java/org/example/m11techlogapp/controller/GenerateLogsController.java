@@ -10,8 +10,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
-import org.example.m11techlogapp.LogEntry;
-import org.example.m11techlogapp.model.DBController;
+import org.example.m11techlogapp.model.InspectionMethod;
+import org.example.m11techlogapp.model.LogEntry;
+import org.example.m11techlogapp.model.LogEntryRepository;
 import org.example.m11techlogapp.model.ConnectDB;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -19,9 +20,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-import static org.example.m11techlogapp.DateUtils.fromDateToJulian;
+import static org.example.m11techlogapp.util.DateUtils.fromDateToJulian;
 
 public class GenerateLogsController {
 
@@ -48,12 +48,6 @@ public class GenerateLogsController {
         stage.show();
     }
 
-    //  get worker names from the db
-    public void resetNames(javafx.event.ActionEvent event) throws SQLException, IOException {
-        listView.getItems().clear();
-        initAllNames();
-    }
-
     public void initSelectedNames(ArrayList<String> distinctNames) {
         selectedNames.getItems().setAll(distinctNames);
     }
@@ -70,8 +64,8 @@ public class GenerateLogsController {
 
     public void initAllNames(){
         ConnectDB connectDB = new ConnectDB();
-        DBController dbController = new DBController(connectDB);
-        ArrayList<String> names = dbController.selectDistinctName();
+        LogEntryRepository logEntryRepository = new LogEntryRepository(connectDB);
+        ArrayList<String> names = logEntryRepository.selectDistinctName();
         connectDB.close();
         Collections.sort(names);
         listView.getItems().setAll(names);
@@ -79,24 +73,9 @@ public class GenerateLogsController {
         listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
     }
 
-    //  get names from selected drop box and format as String for SQL select statement
-    public String getNamesForQuery() {
-    ObservableList<String> names = selectedNames.getItems();
-    ArrayList<String> nameList = new ArrayList<>(names);
-    System.out.println(nameList);
-    if (nameList.isEmpty()) {
-        return "";
-    }
-
-    String formatted = nameList.stream()
-            .map(name -> "'" + name.replace("'", "''") + "'")
-            .collect(Collectors.joining(", ", "(", ")"));
-    return formatted;
-}
-
     //    populate inspection type drop down menu
     public void initializeComboBox(MouseEvent event) {
-        comboBox.setItems(FXCollections.observableArrayList("Eddy Current", "Liquid Penetrant", "Magnetic Particle", "Radiographic", "Ultrasonic", "All Inspections"));
+        comboBox.setItems(FXCollections.observableArrayList(InspectionMethod.logMethodOptions()));
     }
 
     public void toggleAnnualSplit(javafx.event.ActionEvent event) {
@@ -113,8 +92,8 @@ public class GenerateLogsController {
     //  take values from menu to create log and launch output log page
     public void generateLog(javafx.event.ActionEvent event) throws IOException, SQLException {
         String method = comboBox.getValue();
-        String distinctNames = getNamesForQuery();
-        if (beginDatePicker.getValue() == null || endDatePicker.getValue() == null || comboBox.getValue() == null || distinctNames.isEmpty() || method == null) {
+        ArrayList<String> nameList = new ArrayList<>(selectedNames.getItems());
+        if (beginDatePicker.getValue() == null || endDatePicker.getValue() == null || comboBox.getValue() == null || nameList.isEmpty() || method == null) {
             showAlert(Alert.AlertType.INFORMATION, "Error", "fill all the fields");
             return;
         }
@@ -133,8 +112,8 @@ public class GenerateLogsController {
 
         // Fetch the log entries using the updated method
         ConnectDB connectDB = new ConnectDB();
-        DBController dbController = new DBController(connectDB);
-        List<LogEntry> logEntries = dbController.getWorkerEntries(method, distinctNames, beginDate, endDate);
+        LogEntryRepository logEntryRepository = new LogEntryRepository(connectDB);
+        List<LogEntry> logEntries = logEntryRepository.getWorkerEntries(method, nameList, beginDate, endDate);
         connectDB.close();
 
         // Load the FXML and pass the data to the controller
@@ -145,8 +124,6 @@ public class GenerateLogsController {
         controller.setGenerateLogState(beginDatePicker.getValue(), endDatePicker.getValue(), annualSplitCheckBox.isSelected(), anniversaryDatePicker.getValue());
         controller.getTotalHoursForLabel();
 
-        ObservableList<String> names = selectedNames.getItems();
-        ArrayList<String> nameList = new ArrayList<>(names);
         controller.trackNames(nameList);
 
         // Switch to the new scene
