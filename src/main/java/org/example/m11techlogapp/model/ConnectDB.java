@@ -171,16 +171,17 @@ public class ConnectDB {
 
             String createWorkerTable = """
                 CREATE TABLE IF NOT EXISTS workers (
-                    user_id Integer PRIMARY KEY AUTOINCREMENT,
-                    full_name TEXT NOT NULL UNIQUE,
+                    full_name TEXT NOT NULL UNIQUE
                 )
                 """;
+                
             String createWorkerAliasTable = """
                 CREATE TABLE IF NOT EXISTS worker_aliases (
-                    user_id Integer NOT NULL,
-                    name TEXT NOT NULL,
-                    PRIMARY KEY (user_id, name),
-                    FOREIGN KEY (user_id) REFERENCES workers(user_id) ON DELETE CASCADE
+                    full_name TEXT NOT NULL,
+                    alias TEXT NOT NULL,
+                    FOREIGN KEY (full_name) REFERENCES workers (full_name) ON DELETE CASCADE,
+                    UNIQUE (full_name, alias)
+                )   
                     """;
             
         try (var statement = conn.createStatement()) {
