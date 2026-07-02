@@ -39,6 +39,20 @@ public class MainPageController {
         stage.show();
     }
 
+    public void switchToManageWorker(javafx.event.ActionEvent event) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/m11techlogapp/manageWorker.fxml"));
+        Parent root = loader.load();
+        ManageWorkerController controller = loader.getController();
+        controller.initAllLogEntryNames();
+
+      controller.initAllWorkers();
+
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.show();
+    }
+
 
 
 

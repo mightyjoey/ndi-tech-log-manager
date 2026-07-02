@@ -18,11 +18,11 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 public class ManageWorkerController {
@@ -33,9 +33,11 @@ public class ManageWorkerController {
     @FXML
     private TextField newWorkerField; // text field for adding a new worker full name
     @FXML
-    private Text nameText; // currently selected worker name
+    private Label aliasTitle; // header above the alias list, e.g. "Mike Aliases"
     @FXML
     private ListView<String> aliasListView; // list of aliases for the selected worker
+
+    private String selectedWorker; // currently selected worker full name
 
     public void switchToMainPage(javafx.event.ActionEvent event) throws IOException {
         Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("/org/example/m11techlogapp/mainPage.fxml")));
@@ -84,12 +86,33 @@ public class ManageWorkerController {
         }
     }
 
-    // set the text of the name Text element
+    //delete the selected worker full name from the database and update the ListView
+    public void deleteSelectedWorker(){
+        String full_name = workerListView.getSelectionModel().getSelectedItem();
+        if (full_name != null){
+            ConnectDB connectDB = new ConnectDB();
+            WorkerRepository workerRepository = new WorkerRepository(connectDB);
+            String result = workerRepository.deleteWorker(full_name);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Delete Worker");
+            alert.setHeaderText(null);
+            alert.setContentText(result);
+            alert.showAndWait();
+            connectDB.close();
+            initAllWorkers();
+            aliasListView.getItems().clear();
+            selectedWorker = null;
+            aliasTitle.setText("Aliases");
+        }
+    }
+
+    // set the alias header to the selected worker's name, e.g. "Mike Aliases"
     public void setNameText(MouseEvent event) {
         if (event.getClickCount() == 2) {
 
             String selectedName = workerListView.getSelectionModel().getSelectedItem();
-            nameText.setText(selectedName);
+            selectedWorker = selectedName;
+            aliasTitle.setText(selectedName == null ? "Aliases" : selectedName + " Aliases");
 
             if (selectedName != null) {
                 ConnectDB connectDB = new ConnectDB();
@@ -98,7 +121,7 @@ public class ManageWorkerController {
                     workerAliasRepository.getAliasesForWorker(selectedName)
                 );
                 connectDB.close();
-                aliasListView.setItems(aliases);
+                aliasListView.getItems().setAll(aliases);
                 aliasListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             }
 
@@ -130,7 +153,7 @@ public class ManageWorkerController {
     // update the aliases for the selected worker in the database
     public void updateWorkerAliases(){
         ArrayList<String> selectedAliases = new ArrayList<>(aliasListView.getItems());
-        String full_name = nameText.getText();
+        String full_name = selectedWorker;
         ConnectDB connectDB = new ConnectDB();
         WorkerAliasRepository workerAliasRepository = new WorkerAliasRepository(connectDB);
         String result = workerAliasRepository.updateWorkerAliases(full_name, selectedAliases);
@@ -141,6 +164,5 @@ public class ManageWorkerController {
         alert.showAndWait();
         connectDB.close();
     }
-
 
 }

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="750" prefWidth="1000" styleClass="app-root" stylesheets="@app.css"
+            xmlns="http://javafx.com/javafx/17.0.12"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.m11techlogapp.controller.ManageWorkerController">
+
+   <children>
+      <VBox styleClass="app-shell" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
+         <HBox alignment="CENTER_LEFT" styleClass="top-bar">
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label styleClass="app-title" text="M11 TECH LOG"/>
+            <Region HBox.hgrow="ALWAYS"/>
+         </HBox>
+
+         <HBox alignment="CENTER" styleClass="page-ribbon">
+            <Label styleClass="page-heading" text="Manage Workers"/>
+         </HBox>
+
+         <VBox alignment="TOP_CENTER" spacing="28" styleClass="content" VBox.vgrow="ALWAYS">
+            <GridPane hgap="40" vgap="18" maxWidth="930" alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
+               <columnConstraints>
+                  <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" percentWidth="33.333"/>
+                  <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" percentWidth="33.333"/>
+                  <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" percentWidth="33.333"/>
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints valignment="TOP"/>                <!-- titles -->
+                  <RowConstraints valignment="TOP" vgrow="ALWAYS"/>  <!-- list views -->
+                  <RowConstraints valignment="TOP"/>                <!-- helper text -->
+                  <RowConstraints valignment="TOP"/>                <!-- actions -->
+               </rowConstraints>
+
+               <!-- Row 0: column titles -->
+               <VBox alignment="CENTER" spacing="4" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                  <Label styleClass="section-title" text="Workers"/>
+               </VBox>
+               <VBox alignment="CENTER" spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                  <Label fx:id="aliasTitle" styleClass="section-title" text="Aliases"/>
+               </VBox>
+               <VBox alignment="CENTER" spacing="4" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                  <Label styleClass="section-title" text="Names in Records"/>
+               </VBox>
+
+               <!-- Row 1: list views (share the same row, so they align) -->
+               <ListView fx:id="workerListView" onMouseClicked="#setNameText" maxWidth="1.7976931348623157E308" prefHeight="360" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+               <ListView fx:id="aliasListView" onMouseClicked="#removeAlias" maxWidth="1.7976931348623157E308" prefHeight="360" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+               <ListView fx:id="logEntryNameListView" onMouseClicked="#addAlias" maxWidth="1.7976931348623157E308" prefHeight="360" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+
+               <!-- Row 2: helper text -->
+               <Label styleClass="helper-text" text="Double-click a worker to view their aliases." wrapText="true" maxWidth="1.7976931348623157E308" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+               <Label styleClass="helper-text" text="Double-click an alias to remove it." wrapText="true" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+               <Label styleClass="helper-text" text="Double-click a name to add it as an alias." wrapText="true" maxWidth="1.7976931348623157E308" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+
+               <!-- Row 3: actions -->
+               <VBox alignment="TOP_CENTER" spacing="12" GridPane.columnIndex="0" GridPane.rowIndex="3">
+                  <TextField fx:id="newWorkerField" promptText="New worker full name" maxWidth="1.7976931348623157E308"/>
+                  <Button onAction="#createNewWorker" prefWidth="190" styleClass="secondary-button" text="Add Worker"/>
+                  <Button onAction="#deleteSelectedWorker" prefWidth="190" styleClass="danger-button" text="Delete Worker"/>
+               </VBox>
+               <VBox alignment="TOP_CENTER" spacing="12" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                  <Button onAction="#updateWorkerAliases" prefWidth="190" styleClass="primary-button" text="Save Aliases"/>
+               </VBox>
+               <VBox GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+            </GridPane>
+
+            <Button onAction="#switchToMainPage" prefHeight="28" prefWidth="170" styleClass="return-button" text="Return to Main Page"/>
+         </VBox>
+      </VBox>
+   </children>
+</AnchorPane>
