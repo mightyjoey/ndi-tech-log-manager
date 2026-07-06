@@ -11,7 +11,9 @@ The app lets users import or enter inspection records, search the database, gene
 - Add individual inspection records
 - Import inspection records from Excel workbooks
 - Search records by nomenclature or corrective action keyword
-- Generate logs by inspector, inspection method, and date range
+- Manage workers and register alias name spellings that appear in the raw records
+- Generate logs by inspector name, or by a worker and all of their aliases
+- Filter generated logs by inspection method and date range
 - Generate all-inspection logs grouped by method
 - Optionally split generated logs by an annual anniversary date
 - Review totals for inspections and hours before export
@@ -101,7 +103,7 @@ The Windows build uses JavaFX `win` artifacts automatically. Add `--icon path\to
 
 ## Database
 
-The app uses SQLite and stores records in the `worker_entry` table.
+The app uses SQLite. Inspection records are stored in the `worker_entry` table, while worker identities and their alias name spellings are stored in the `workers` and `worker_aliases` tables. Foreign keys are enforced — every connection runs `PRAGMA foreign_keys = ON`.
 
 When running from source, the database path is:
 
@@ -131,6 +133,8 @@ On first launch, the packaged app copies the starter database from the app bundl
 
 ### Schema
 
+Inspection records:
+
 ```sql
 CREATE TABLE IF NOT EXISTS worker_entry (
   dttm REAL NOT NULL,
@@ -144,6 +148,23 @@ CREATE TABLE IF NOT EXISTS worker_entry (
 ```
 
 Duplicate rows are ignored by the primary key constraint.
+
+Workers and their alias name spellings:
+
+```sql
+CREATE TABLE IF NOT EXISTS workers (
+  full_name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS worker_aliases (
+  full_name TEXT NOT NULL,
+  alias TEXT NOT NULL,
+  FOREIGN KEY (full_name) REFERENCES workers (full_name) ON DELETE CASCADE,
+  UNIQUE (full_name, alias)
+);
+```
+
+A worker's `full_name` is the canonical identity; each `alias` is a name spelling as it appears in the `name` column of `worker_entry`. Deleting a worker cascades to remove their aliases. All three tables are created automatically on first launch if they do not exist.
 
 ## Excel Import Format
 
@@ -172,10 +193,21 @@ Supported method codes used by the app:
 
 The importer uses Apache POI to detect workbook format automatically, so both `.xls` and `.xlsx` files are supported.
 
+## Managing Workers and Aliases
+
+The same inspector can appear under several name spellings in imported records (for example `SMITH`, `SMITH J`, `J SMITH`). Workers let you group those spellings under one canonical identity so logs can be generated for a person rather than a single spelling.
+
+1. Open Manage Workers.
+2. Add a worker by entering a full name and creating it. This becomes the canonical identity.
+3. Select a worker to view and edit their aliases.
+4. Assign aliases by picking the record names (drawn from the distinct `name` values in the database) that belong to that worker.
+
+When generating logs you can then select the worker, and the app queries every record matching any of their aliases.
+
 ## Generating and Exporting Logs
 
 1. Open Generate Logs.
-2. Select one or more inspector names.
+2. Select one or more inspector names, or enable the worker option to pick a worker and use all of their aliases.
 3. Choose an inspection method or All Inspections.
 4. Choose a beginning and ending date.
 5. Optionally enable Annual Split and choose the anniversary date.
@@ -195,11 +227,12 @@ For All Inspections, the export groups records into method-specific pages. For a
 
 ```text
 src/main/java/org/example/m11techlogapp/
-  DateUtils.java                         Date conversion helpers
   Launcher.java                          Packaged app entry point
   HelloApplication.java                  JavaFX application startup
   controller/                            JavaFX screen controllers
-  model/                                 SQLite connection and queries
+  model/                                 Connection, repositories, and domain types
+  service/                               Log query and PDF export services
+  util/                                  Date and annual-period helpers
 
 src/main/resources/
   org/example/m11techlogapp/*.fxml       JavaFX views
@@ -218,3 +251,4 @@ src/main/jpackage/
 - Shaded JAR output: `target/M11TechLogApp-shaded.jar`
 - Local runtime databases and packaged build outputs are ignored by Git.
 - JavaFX classifiers are selected with Maven profiles: `mac-aarch64`, `mac-x64`, `windows`, and `linux`.
+- Run the JUnit test suite with `./mvnw test` (repository, service, integration, and system tests live under `src/test/java`).
