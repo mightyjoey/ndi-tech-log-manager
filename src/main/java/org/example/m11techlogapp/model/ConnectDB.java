@@ -36,6 +36,7 @@ public class ConnectDB {
         try {
             System.out.println("Connecting to DB at: " + dbUrl);
             conn = DriverManager.getConnection(dbUrl);
+            enableForeignKeys(conn);
             ensureDatabaseInitialized();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -44,9 +45,17 @@ public class ConnectDB {
 
     public Connection getConnection() {
         try {
-            return DriverManager.getConnection(dbUrl);
+            Connection connection = DriverManager.getConnection(dbUrl);
+            enableForeignKeys(connection);
+            return connection;
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void enableForeignKeys(Connection connection) throws SQLException {
+        try (var statement = connection.createStatement()) {
+            statement.execute("PRAGMA foreign_keys = ON");
         }
     }
 
