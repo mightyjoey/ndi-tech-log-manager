@@ -36,6 +36,7 @@ public class ConnectDB {
         try {
             System.out.println("Connecting to DB at: " + dbUrl);
             conn = DriverManager.getConnection(dbUrl);
+            enableForeignKeys(conn);
             ensureDatabaseInitialized();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -44,9 +45,17 @@ public class ConnectDB {
 
     public Connection getConnection() {
         try {
-            return DriverManager.getConnection(dbUrl);
+            Connection connection = DriverManager.getConnection(dbUrl);
+            enableForeignKeys(connection);
+            return connection;
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void enableForeignKeys(Connection connection) throws SQLException {
+        try (var statement = connection.createStatement()) {
+            statement.execute("PRAGMA foreign_keys = ON");
         }
     }
 
@@ -169,8 +178,25 @@ public class ConnectDB {
                 )
                 """;
 
+            String createWorkerTable = """
+                CREATE TABLE IF NOT EXISTS workers (
+                    full_name TEXT NOT NULL UNIQUE
+                )
+                """;
+                
+            String createWorkerAliasTable = """
+                CREATE TABLE IF NOT EXISTS worker_aliases (
+                    full_name TEXT NOT NULL,
+                    alias TEXT NOT NULL,
+                    FOREIGN KEY (full_name) REFERENCES workers (full_name) ON DELETE CASCADE,
+                    UNIQUE (full_name, alias)
+                )   
+                    """;
+            
         try (var statement = conn.createStatement()) {
             statement.execute(createWorkerEntryTable);
+            statement.execute(createWorkerTable);
+            statement.execute(createWorkerAliasTable);
         }
     }
 

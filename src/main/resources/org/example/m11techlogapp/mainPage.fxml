@@ -45,6 +45,14 @@
                   </HBox>
                   <Label styleClass="helper-text" text="Upload records or add an individual entry."/>
                </VBox>
+
+               <VBox spacing="8" styleClass="dashboard-panel">
+                  <HBox alignment="CENTER_LEFT" spacing="18">
+                     <Label styleClass="section-title" text="X"/>
+                     <Button mnemonicParsing="false" onAction="#switchToManageWorker" styleClass="secondary-button" text="Manage Workers"/>
+                  </HBox>
+                  <Label styleClass="helper-text" text="Add workers and map record names to them as aliases."/>
+               </VBox>
             </VBox>
          </VBox>
       </VBox>

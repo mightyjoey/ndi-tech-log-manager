@@ -1,12 +1,13 @@
 package org.example.m11techlogapp.controller;
 
+import java.io.IOException;
+import java.util.Objects;
+
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import java.io.IOException;
-import java.util.Objects;
 
 public class MainPageController {
 
@@ -37,6 +38,22 @@ public class MainPageController {
         stage.setScene(scene);
         stage.show();
     }
+
+    public void switchToManageWorker(javafx.event.ActionEvent event) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/m11techlogapp/manageWorker.fxml"));
+        Parent root = loader.load();
+        ManageWorkerController controller = loader.getController();
+        controller.initAllLogEntryNames();
+
+      controller.initAllWorkers();
+
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+
 
 
 
