@@ -79,6 +79,12 @@ jpackage \
 
 The Maven build copies `src/main/jpackage/worker_entry.db` into `target`, so `jpackage --input target` includes the starter database in the app image.
 
+Zip the app bundle for distribution. Use `ditto` rather than `zip` so symlinks, permissions, and code-signing metadata are preserved:
+
+```bash
+ditto -c -k --sequesterRsrc --keepParent M11TechLogApp.app M11TechLogApp-mac.zip
+```
+
 ## Packaging for Windows
 
 Build the shaded JAR:
@@ -100,6 +106,12 @@ jpackage `
 ```
 
 The Windows build uses JavaFX `win` artifacts automatically. Add `--icon path\to\icon.ico` if a Windows `.ico` icon is available.
+
+Zip the app image for distribution (from PowerShell):
+
+```powershell
+Compress-Archive -Path M11TechLogApp -DestinationPath M11TechLogApp-win.zip
+```
 
 ## Database
 
