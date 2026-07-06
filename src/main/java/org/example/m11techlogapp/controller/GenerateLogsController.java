@@ -1,19 +1,5 @@
 package org.example.m11techlogapp.controller;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
-import javafx.stage.Stage;
-import org.example.m11techlogapp.model.InspectionMethod;
-import org.example.m11techlogapp.model.LogEntry;
-import org.example.m11techlogapp.model.LogEntryRepository;
-import org.example.m11techlogapp.model.ConnectDB;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -21,7 +7,30 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import org.example.m11techlogapp.model.ConnectDB;
+import org.example.m11techlogapp.model.InspectionMethod;
+import org.example.m11techlogapp.model.LogEntry;
+import org.example.m11techlogapp.model.LogEntryRepository;
+import org.example.m11techlogapp.model.WorkerAliasRepository;
+import org.example.m11techlogapp.model.WorkerRepository;
 import static org.example.m11techlogapp.util.DateUtils.fromDateToJulian;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.ListView;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.input.MouseEvent;
+import javafx.stage.Stage;
 
 public class GenerateLogsController {
 
@@ -39,6 +48,12 @@ public class GenerateLogsController {
     private CheckBox annualSplitCheckBox;
     @FXML
     private DatePicker anniversaryDatePicker;
+    @FXML
+    private RadioButton useWorkerRadioButton;
+    @FXML
+    private ListView<String> workerListView;
+    @FXML
+    private ListView<String> workerAliasListView;
 
     public void switchToMainPage(javafx.event.ActionEvent event) throws IOException {
         Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("/org/example/m11techlogapp/mainPage.fxml")));
@@ -73,6 +88,43 @@ public class GenerateLogsController {
         listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
     }
 
+    public void initWorkerNames(){
+        ConnectDB connectDB = new ConnectDB();
+        WorkerRepository workerRepository = new WorkerRepository(connectDB);
+        ArrayList<String> names = workerRepository.getAllWorkers();
+        connectDB.close();
+        Collections.sort(names);
+        workerListView.getItems().setAll(names);
+    }
+
+    public void initWorkerAliasNames(String full_name){
+        ConnectDB connectdDB = new ConnectDB();
+        WorkerAliasRepository workerAliasRepository = new WorkerAliasRepository(connectdDB);
+        List<String> names = workerAliasRepository.getAliasesForWorker(full_name);
+        connectdDB.close();
+        Collections.sort(names);
+        workerAliasListView.getItems().setAll(names);
+    }
+
+    // Show the worker panels instead of the record-name panels when the radio is selected.
+    public void isUseworkerSelected(javafx.event.ActionEvent event) {
+        boolean isSelected = useWorkerRadioButton.isSelected();
+
+        listView.setVisible(!isSelected);
+        listView.setManaged(!isSelected);
+        selectedNames.setVisible(!isSelected);
+        selectedNames.setManaged(!isSelected);
+
+        workerListView.setVisible(isSelected);
+        workerListView.setManaged(isSelected);
+        workerAliasListView.setVisible(isSelected);
+        workerAliasListView.setManaged(isSelected);
+
+        if (isSelected && workerListView.getItems().isEmpty()) {
+            initWorkerNames();
+        }
+    }
+
     //    populate inspection type drop down menu
     public void initializeComboBox(MouseEvent event) {
         comboBox.setItems(FXCollections.observableArrayList(InspectionMethod.logMethodOptions()));
@@ -92,7 +144,13 @@ public class GenerateLogsController {
     //  take values from menu to create log and launch output log page
     public void generateLog(javafx.event.ActionEvent event) throws IOException, SQLException {
         String method = comboBox.getValue();
-        ArrayList<String> nameList = new ArrayList<>(selectedNames.getItems());
+        ArrayList<String> nameList;
+        if (useWorkerRadioButton.isSelected()){
+            nameList = new ArrayList<>(workerAliasListView.getItems());
+        } else {
+            nameList = new ArrayList<>(selectedNames.getItems());
+        }
+
         if (beginDatePicker.getValue() == null || endDatePicker.getValue() == null || comboBox.getValue() == null || nameList.isEmpty() || method == null) {
             showAlert(Alert.AlertType.INFORMATION, "Error", "fill all the fields");
             return;
@@ -141,6 +199,7 @@ public class GenerateLogsController {
             listView.getItems().removeAll(selectedItems);
         }
     }
+
     @FXML
     public void handleSelectedNamesClick(MouseEvent event) {
         if (event.getClickCount() == 2) {
@@ -155,6 +214,26 @@ public class GenerateLogsController {
             }
             selectedNames.getItems().removeAll(selected);
             FXCollections.sort(listView.getItems());
+        }
+    }
+
+    @FXML
+    private void handleWorkerClick(MouseEvent event) {
+        if (event.getClickCount() == 2) {
+            String worker = workerListView.getSelectionModel().getSelectedItem();
+            if (worker != null) {
+                initWorkerAliasNames(worker);
+            }
+        }
+    }
+
+    @FXML
+    private void handleWorkerAliasClick(MouseEvent event) {
+        if (event.getClickCount() == 2) {
+            String alias = workerAliasListView.getSelectionModel().getSelectedItem();
+            if (alias != null) {
+                workerAliasListView.getItems().remove(alias);
+            }
         }
     }
 
