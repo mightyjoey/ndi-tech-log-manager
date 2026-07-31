@@ -21,41 +21,51 @@
          </HBox>
 
          <VBox alignment="TOP_CENTER" spacing="18" styleClass="content" VBox.vgrow="ALWAYS">
-            <HBox alignment="CENTER">
+            <HBox alignment="CENTER" styleClass="mode-bar" maxWidth="-Infinity">
                <RadioButton fx:id="useWorkerRadioButton" mnemonicParsing="false" onAction="#isUseworkerSelected" text="Use worker list"/>
             </HBox>
 
-            <HBox alignment="CENTER" maxWidth="900" spacing="30" VBox.vgrow="ALWAYS">
+            <HBox alignment="CENTER" maxWidth="900" spacing="24" VBox.vgrow="ALWAYS">
                <VBox alignment="TOP_CENTER" prefWidth="250" spacing="10" styleClass="panel">
                   <Label styleClass="section-title" text="Worker Names"/>
-                  <ListView fx:id="listView" onMouseClicked="#handleMouseClick" prefHeight="418" prefWidth="250" VBox.vgrow="ALWAYS"/>
-                  <ListView fx:id="workerListView" onMouseClicked="#handleWorkerClick" prefHeight="418" prefWidth="250" managed="false" visible="false" VBox.vgrow="ALWAYS"/>
+                  <ListView fx:id="listView" onMouseClicked="#handleMouseClick" prefHeight="418" prefWidth="250" VBox.vgrow="ALWAYS">
+                     <placeholder><Label text="No names in the database yet."/></placeholder>
+                  </ListView>
+                  <ListView fx:id="workerListView" onMouseClicked="#handleWorkerClick" prefHeight="418" prefWidth="250" managed="false" visible="false" VBox.vgrow="ALWAYS">
+                     <placeholder><Label text="No workers created yet."/></placeholder>
+                  </ListView>
                </VBox>
 
                <VBox alignment="TOP_CENTER" prefWidth="230" spacing="10" styleClass="panel">
                   <Label styleClass="section-title" text="Selected Names"/>
-                  <ListView fx:id="selectedNames" onMouseClicked="#handleSelectedNamesClick" prefHeight="418" prefWidth="230" VBox.vgrow="ALWAYS"/>
-                  <ListView fx:id="workerAliasListView" onMouseClicked="#handleWorkerAliasClick" prefHeight="418" prefWidth="230" managed="false" visible="false" VBox.vgrow="ALWAYS"/>
+                  <ListView fx:id="selectedNames" onMouseClicked="#handleSelectedNamesClick" prefHeight="418" prefWidth="230" VBox.vgrow="ALWAYS">
+                     <placeholder><Label text="Click a name to add it."/></placeholder>
+                  </ListView>
+                  <ListView fx:id="workerAliasListView" onMouseClicked="#handleWorkerAliasClick" prefHeight="418" prefWidth="230" managed="false" visible="false" VBox.vgrow="ALWAYS">
+                     <placeholder><Label text="Select a worker to see aliases."/></placeholder>
+                  </ListView>
                </VBox>
 
-               <VBox alignment="TOP_CENTER" prefWidth="260" spacing="10" styleClass="panel">
-                  <Label styleClass="section-title" text="Log Details"/>
+               <VBox alignment="TOP_LEFT" prefWidth="260" spacing="9" styleClass="panel">
+                  <Label alignment="CENTER" maxWidth="Infinity" styleClass="section-title" text="Log Details"/>
 
                   <Label styleClass="field-label" text="Inspection Type"/>
-                  <ComboBox fx:id="comboBox" onMouseClicked="#initializeComboBox" prefWidth="220"/>
+                  <ComboBox fx:id="comboBox" onMouseClicked="#initializeComboBox" maxWidth="Infinity" promptText="Select inspection type"/>
 
                   <Label styleClass="field-label" text="Begin Date"/>
-                  <DatePicker fx:id="beginDatePicker" prefWidth="220"/>
+                  <DatePicker fx:id="beginDatePicker" maxWidth="Infinity"/>
 
                   <Label styleClass="field-label" text="End Date"/>
-                  <DatePicker fx:id="endDatePicker" prefWidth="220"/>
+                  <DatePicker fx:id="endDatePicker" maxWidth="Infinity"/>
 
                   <CheckBox fx:id="annualSplitCheckBox" mnemonicParsing="false" onAction="#toggleAnnualSplit" text="Split NDI log annually"/>
 
                   <Label styleClass="field-label" text="Anniversary Date"/>
-                  <DatePicker fx:id="anniversaryDatePicker" disable="true" prefWidth="220" promptText="Select date"/>
+                  <DatePicker fx:id="anniversaryDatePicker" disable="true" maxWidth="Infinity" promptText="Select date"/>
 
-                  <Button mnemonicParsing="false" onAction="#generateLog" prefWidth="150" styleClass="primary-button" text="Generate Log"/>
+                  <Region VBox.vgrow="ALWAYS"/>
+
+                  <Button mnemonicParsing="false" onAction="#generateLog" maxWidth="Infinity" styleClass="primary-button" text="Generate Log"/>
                </VBox>
             </HBox>
 

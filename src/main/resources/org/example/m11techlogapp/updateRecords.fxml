@@ -22,10 +22,12 @@
 
          <VBox alignment="TOP_CENTER" spacing="28" styleClass="content" VBox.vgrow="ALWAYS">
             <HBox alignment="TOP_CENTER" maxWidth="900" spacing="70" VBox.vgrow="ALWAYS">
-               <VBox alignment="TOP_CENTER" prefWidth="300" spacing="16" styleClass="panel">
+               <VBox alignment="TOP_CENTER" prefWidth="300" spacing="12" styleClass="panel">
                   <Label styleClass="section-title" text="Update Database"/>
-                  <Button onAction="#uploadFile" prefWidth="190" styleClass="secondary-button" text="Update With Excel File"/>
-                  <Button onAction="#clearDB" prefWidth="190" styleClass="danger-button" text="Clear All Records"/>
+                  <Label styleClass="helper-text" text="Import a workbook of inspection records, or clear the database entirely."
+                         wrapText="true" maxWidth="Infinity"/>
+                  <Button onAction="#uploadFile" prefWidth="200" styleClass="secondary-button" text="Update With Excel File"/>
+                  <Button onAction="#clearDB" prefWidth="200" styleClass="danger-button" text="Clear All Records"/>
                </VBox>
 
                <VBox alignment="TOP_CENTER" prefWidth="460" spacing="16" styleClass="panel">

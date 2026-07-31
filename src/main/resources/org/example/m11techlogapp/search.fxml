@@ -26,7 +26,9 @@
                     <Button fx:id="searchButton" mnemonicParsing="false" onAction="#search" prefWidth="120" styleClass="primary-button" text="Search"/>
                 </HBox>
 
-                <TableView fx:id="tableView" prefHeight="500" VBox.vgrow="ALWAYS"/>
+                <TableView fx:id="tableView" prefHeight="500" VBox.vgrow="ALWAYS">
+                    <placeholder><Label text="Enter a keyword above to search records."/></placeholder>
+                </TableView>
 
                 <HBox alignment="CENTER">
                     <Button onAction="#switchToMainPage" prefHeight="28" prefWidth="170" styleClass="return-button" text="Return to Main Page"/>

@@ -21,7 +21,9 @@
             </HBox>
 
             <VBox spacing="14" styleClass="content" VBox.vgrow="ALWAYS">
-                <TableView fx:id="tableView" prefHeight="360" VBox.vgrow="ALWAYS"/>
+                <TableView fx:id="tableView" prefHeight="360" VBox.vgrow="ALWAYS">
+                    <placeholder><Label text="No records matched the selected filters."/></placeholder>
+                </TableView>
 
                 <Label fx:id="totalHoursLabel" alignment="CENTER" maxWidth="Infinity" styleClass="summary-label" text="Total Inspections Performed:          Total Hours:      " textAlignment="CENTER"/>
 
@@ -56,20 +58,33 @@
                         <TextField fx:id="corrActField" prefHeight="26.0" prefWidth="150.0"/>
                     </VBox>
                     <VBox alignment="BOTTOM_CENTER" spacing="4">
-                        <Button alignment="CENTER" onAction="#addIndividualRecord" prefHeight="28" styleClass="secondary-button" text="Add Individual Record"/>
+                        <Button alignment="CENTER" onAction="#addIndividualRecord" prefWidth="110" styleClass="secondary-button" text="Add Record"/>
                     </VBox>
                 </HBox>
 
-                <HBox alignment="CENTER" maxWidth="Infinity" spacing="26">
-                    <VBox alignment="CENTER_LEFT" spacing="8">
-                        <TextField fx:id="nameField" prefWidth="200" promptText="Enter name"/>
-                        <TextField fx:id="rankField" prefWidth="200" promptText="Enter rank / rate"/>
-                        <TextField fx:id="organizationField" prefWidth="200" promptText="Enter organization"/>
+                <HBox alignment="CENTER" maxWidth="Infinity" spacing="24">
+                    <VBox spacing="9" styleClass="panel">
+                        <Label styleClass="section-title" text="Log Header Details"/>
+                        <Label styleClass="helper-text" text="Printed at the top of the exported PDFs."/>
+                        <HBox spacing="12">
+                            <VBox spacing="4">
+                                <Label styleClass="field-label" text="Name"/>
+                                <TextField fx:id="nameField" prefWidth="180" promptText="Enter name"/>
+                            </VBox>
+                            <VBox spacing="4">
+                                <Label styleClass="field-label" text="Rank / Rate"/>
+                                <TextField fx:id="rankField" prefWidth="150" promptText="Enter rank / rate"/>
+                            </VBox>
+                            <VBox spacing="4">
+                                <Label styleClass="field-label" text="Organization"/>
+                                <TextField fx:id="organizationField" prefWidth="180" promptText="Enter organization"/>
+                            </VBox>
+                        </HBox>
                     </VBox>
 
-                    <VBox alignment="CENTER" spacing="12">
-                        <Button onAction="#exportPDF" prefWidth="170" styleClass="primary-button" text="Export as PDF"/>
-                        <Button onAction="#switchToGenerateLogs" prefWidth="170" styleClass="return-button" text="Return to Generate Log"/>
+                    <VBox alignment="CENTER" spacing="10">
+                        <Button onAction="#exportPDF" prefWidth="180" styleClass="primary-button" text="Export as PDF"/>
+                        <Button onAction="#switchToGenerateLogs" prefWidth="180" styleClass="return-button" text="Return to Generate Log"/>
                     </VBox>
                 </HBox>
             </VBox>
