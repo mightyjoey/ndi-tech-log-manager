@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
 
 <AnchorPane prefHeight="750" prefWidth="1000" styleClass="app-root" stylesheets="@app.css"
             xmlns="http://javafx.com/javafx/17.0.12"
@@ -21,38 +22,56 @@
          </HBox>
 
          <VBox alignment="TOP_CENTER" spacing="18" styleClass="content" VBox.vgrow="ALWAYS">
-            <VBox maxWidth="760" spacing="18">
-               <VBox spacing="8" styleClass="dashboard-panel">
-                  <HBox alignment="CENTER_LEFT" spacing="18">
-                     <Label styleClass="section-title" text="+"/>
-                     <Button mnemonicParsing="false" onAction="#switchToGenerateLogs" styleClass="secondary-button" text="Generate Logs"/>
-                  </HBox>
-                  <Label styleClass="helper-text" text="Create inspection history and export work logs."/>
-               </VBox>
+            <VBox maxWidth="720" spacing="14">
 
-               <VBox spacing="8" styleClass="dashboard-panel">
-                  <HBox alignment="CENTER_LEFT" spacing="18">
-                     <Label styleClass="section-title" text="?"/>
-                     <Button mnemonicParsing="false" onAction="#switchToSearch" styleClass="secondary-button" text="Search by Key Word"/>
-                  </HBox>
-                  <Label styleClass="helper-text" text="Find existing records by keyword."/>
-               </VBox>
+               <HBox alignment="CENTER_LEFT" spacing="18" styleClass="dashboard-card">
+                  <StackPane styleClass="card-icon">
+                     <SVGPath styleClass="card-icon-glyph"
+                              content="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                  </StackPane>
+                  <VBox spacing="3" HBox.hgrow="ALWAYS">
+                     <Label styleClass="card-title" text="Generate Logs"/>
+                     <Label styleClass="helper-text" text="Create inspection history and export work logs."/>
+                  </VBox>
+                  <Button mnemonicParsing="false" onAction="#switchToGenerateLogs" prefWidth="92" styleClass="secondary-button" text="Open"/>
+               </HBox>
 
-               <VBox spacing="8" styleClass="dashboard-panel">
-                  <HBox alignment="CENTER_LEFT" spacing="18">
-                     <Label styleClass="section-title" text="..."/>
-                     <Button mnemonicParsing="false" onAction="#switchToUpdateRecords" styleClass="secondary-button" text="Update Records"/>
-                  </HBox>
-                  <Label styleClass="helper-text" text="Upload records or add an individual entry."/>
-               </VBox>
+               <HBox alignment="CENTER_LEFT" spacing="18" styleClass="dashboard-card">
+                  <StackPane styleClass="card-icon">
+                     <SVGPath styleClass="card-icon-glyph"
+                              content="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                  </StackPane>
+                  <VBox spacing="3" HBox.hgrow="ALWAYS">
+                     <Label styleClass="card-title" text="Search by Key Word"/>
+                     <Label styleClass="helper-text" text="Find existing records by keyword."/>
+                  </VBox>
+                  <Button mnemonicParsing="false" onAction="#switchToSearch" prefWidth="92" styleClass="secondary-button" text="Open"/>
+               </HBox>
 
-               <VBox spacing="8" styleClass="dashboard-panel">
-                  <HBox alignment="CENTER_LEFT" spacing="18">
-                     <Label styleClass="section-title" text="X"/>
-                     <Button mnemonicParsing="false" onAction="#switchToManageWorker" styleClass="secondary-button" text="Manage Workers"/>
-                  </HBox>
-                  <Label styleClass="helper-text" text="Add workers and map record names to them as aliases."/>
-               </VBox>
+               <HBox alignment="CENTER_LEFT" spacing="18" styleClass="dashboard-card">
+                  <StackPane styleClass="card-icon">
+                     <SVGPath styleClass="card-icon-glyph"
+                              content="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+                  </StackPane>
+                  <VBox spacing="3" HBox.hgrow="ALWAYS">
+                     <Label styleClass="card-title" text="Update Records"/>
+                     <Label styleClass="helper-text" text="Upload records or add an individual entry."/>
+                  </VBox>
+                  <Button mnemonicParsing="false" onAction="#switchToUpdateRecords" prefWidth="92" styleClass="secondary-button" text="Open"/>
+               </HBox>
+
+               <HBox alignment="CENTER_LEFT" spacing="18" styleClass="dashboard-card">
+                  <StackPane styleClass="card-icon">
+                     <SVGPath styleClass="card-icon-glyph"
+                              content="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                  </StackPane>
+                  <VBox spacing="3" HBox.hgrow="ALWAYS">
+                     <Label styleClass="card-title" text="Manage Workers"/>
+                     <Label styleClass="helper-text" text="Add workers and map record names to them as aliases."/>
+                  </VBox>
+                  <Button mnemonicParsing="false" onAction="#switchToManageWorker" prefWidth="92" styleClass="secondary-button" text="Open"/>
+               </HBox>
+
             </VBox>
          </VBox>
       </VBox>

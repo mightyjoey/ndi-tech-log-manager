@@ -70,6 +70,7 @@ public class ConnectDB {
         if (macContentsDir != null) {
             Path userDatabase = getUserDataDirectory().resolve(DB_FILE_NAME);
             copyStarterDatabaseIfNeeded(userDatabase,
+                    macContentsDir.resolve("app").resolve(DB_FILE_NAME),
                     macContentsDir.resolve("Resources").resolve(DB_FILE_NAME),
                     macContentsDir.resolve("Java").resolve(DB_FILE_NAME));
 

@@ -70,14 +70,14 @@ Create a macOS app image:
 jpackage \
   --type app-image \
   --name M11TechLogApp \
-  --input target \
+  --input target/jpackage-input \
   --main-jar M11TechLogApp-shaded.jar \
   --main-class org.example.m11techlogapp.Launcher \
   --icon MyIcon.icns \
   --dest .
 ```
 
-The Maven build copies `src/main/jpackage/worker_entry.db` into `target`, so `jpackage --input target` includes the starter database in the app image.
+The Maven build stages everything that belongs in the app image under `target/jpackage-input`: the shade plugin writes `M11TechLogApp-shaded.jar` there, and `src/main/jpackage/worker_entry.db` is copied alongside it. Point `jpackage --input` at that directory rather than at `target` — `jpackage` copies *every* file from the input directory into the app image, so passing `target` would also sweep in the thin `M11TechLogApp-<version>.jar` and emit a duplicate `app.classpath` entry in the generated `.cfg`.
 
 Zip the app bundle for distribution. Use `ditto` rather than `zip` so symlinks, permissions, and code-signing metadata are preserved:
 
@@ -99,7 +99,7 @@ Create a Windows app image:
 jpackage `
   --type app-image `
   --name M11TechLogApp `
-  --input target `
+  --input target\jpackage-input `
   --main-jar M11TechLogApp-shaded.jar `
   --main-class org.example.m11techlogapp.Launcher `
   --dest .
@@ -254,13 +254,17 @@ src/main/resources/
 
 src/main/jpackage/
   worker_entry.db                        Starter database copied during packaging
+
+target/jpackage-input/                   Staging directory passed to jpackage
+  M11TechLogApp-shaded.jar               Fat JAR written here by the shade plugin
+  worker_entry.db                        Starter database copied here at prepare-package
 ```
 
 ## Development Notes
 
 - Main class for packaged runs: `org.example.m11techlogapp.Launcher`
 - Maven artifact: `M11TechLogApp`
-- Shaded JAR output: `target/M11TechLogApp-shaded.jar`
+- Shaded JAR output: `target/jpackage-input/M11TechLogApp-shaded.jar`
 - Local runtime databases and packaged build outputs are ignored by Git.
 - JavaFX classifiers are selected with Maven profiles: `mac-aarch64`, `mac-x64`, `windows`, and `linux`.
 - Run the JUnit test suite with `./mvnw test` (repository, service, integration, and system tests live under `src/test/java`).

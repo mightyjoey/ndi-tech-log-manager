@@ -46,9 +46,15 @@
                </VBox>
 
                <!-- Row 1: list views (share the same row, so they align) -->
-               <ListView fx:id="workerListView" onMouseClicked="#setNameText" maxWidth="1.7976931348623157E308" prefHeight="360" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-               <ListView fx:id="aliasListView" onMouseClicked="#removeAlias" maxWidth="1.7976931348623157E308" prefHeight="360" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-               <ListView fx:id="logEntryNameListView" onMouseClicked="#addAlias" maxWidth="1.7976931348623157E308" prefHeight="360" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+               <ListView fx:id="workerListView" onMouseClicked="#setNameText" maxWidth="1.7976931348623157E308" prefHeight="360" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                  <placeholder><Label text="No workers yet. Add one below."/></placeholder>
+               </ListView>
+               <ListView fx:id="aliasListView" onMouseClicked="#removeAlias" maxWidth="1.7976931348623157E308" prefHeight="360" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                  <placeholder><Label text="Select a worker to see aliases."/></placeholder>
+               </ListView>
+               <ListView fx:id="logEntryNameListView" onMouseClicked="#addAlias" maxWidth="1.7976931348623157E308" prefHeight="360" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                  <placeholder><Label text="No names in the database yet."/></placeholder>
+               </ListView>
 
                <!-- Row 2: helper text -->
                <Label styleClass="helper-text" text="Double-click a worker to view their aliases." wrapText="true" maxWidth="1.7976931348623157E308" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
