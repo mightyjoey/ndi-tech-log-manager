@@ -64,6 +64,8 @@ public class OutputLogController {
     private LocalDate generateEndDate;
     private boolean annualSplitSelected;
     private LocalDate annualLogStartDate;
+    private boolean useWorkerMode;
+    private String selectedWorker;
 
     public void getTotalHoursForLabel(){
         double total = 0;
@@ -77,6 +79,12 @@ public class OutputLogController {
 
     public void trackNames(ArrayList<String> names){
         this.selectedNames = names;
+    }
+
+    // remember whether the log was generated from a worker so the generate page can be restored in the same mode
+    public void setWorkerState(boolean useWorker, String worker) {
+        this.useWorkerMode = useWorker;
+        this.selectedWorker = worker;
     }
 
     public void setGenerateLogState(LocalDate beginDate, LocalDate endDate, boolean splitAnnually, LocalDate anniversaryDate) {
@@ -175,8 +183,12 @@ public class OutputLogController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/m11techlogapp/generateLogs.fxml"));
         Parent root = loader.load();
         GenerateLogsController controller = loader.getController();
-        controller.initSelectedNames(selectedNames);
-        controller.initAllNames();
+        if (useWorkerMode && selectedWorker != null) {
+            controller.initWorkerFormState(selectedWorker, selectedNames);
+        } else {
+            controller.initSelectedNames(selectedNames);
+            controller.initAllNames();
+        }
         controller.initFormState(selectedMethod, generateBeginDate, generateEndDate, annualSplitSelected, annualLogStartDate);
 
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
