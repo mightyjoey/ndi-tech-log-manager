@@ -55,6 +55,8 @@ public class GenerateLogsController {
     @FXML
     private ListView<String> workerAliasListView;
 
+    private String selectedWorker; // worker whose aliases are shown in workerAliasListView
+
     public void switchToMainPage(javafx.event.ActionEvent event) throws IOException {
         Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("/org/example/m11techlogapp/mainPage.fxml")));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -75,6 +77,20 @@ public class GenerateLogsController {
         annualSplitCheckBox.setSelected(splitAnnually);
         anniversaryDatePicker.setDisable(!splitAnnually);
         anniversaryDatePicker.setValue(anniversaryDate);
+    }
+
+    // Restore worker mode when returning from the output page: show the worker panels,
+    // reselect the worker, and put back the alias list the log was generated from.
+    // queriedNames is the name list used for the query, i.e. the worker plus its aliases.
+    public void initWorkerFormState(String worker, ArrayList<String> queriedNames) {
+        initAllNames();
+        useWorkerRadioButton.setSelected(true);
+        applyWorkerMode(true);
+        selectedWorker = worker;
+        workerListView.getSelectionModel().select(worker);
+        ArrayList<String> aliases = new ArrayList<>(queriedNames);
+        aliases.remove(worker);
+        workerAliasListView.getItems().setAll(aliases);
     }
 
     public void initAllNames(){
@@ -106,10 +122,12 @@ public class GenerateLogsController {
         workerAliasListView.getItems().setAll(names);
     }
 
-    // Show the worker panels instead of the record-name panels when the radio is selected.
     public void isUseworkerSelected(javafx.event.ActionEvent event) {
-        boolean isSelected = useWorkerRadioButton.isSelected();
+        applyWorkerMode(useWorkerRadioButton.isSelected());
+    }
 
+    // Show the worker panels instead of the record-name panels when the radio is selected.
+    private void applyWorkerMode(boolean isSelected) {
         listView.setVisible(!isSelected);
         listView.setManaged(!isSelected);
         selectedNames.setVisible(!isSelected);
@@ -146,7 +164,19 @@ public class GenerateLogsController {
         String method = comboBox.getValue();
         ArrayList<String> nameList;
         if (useWorkerRadioButton.isSelected()){
-            nameList = new ArrayList<>(workerAliasListView.getItems());
+            if (selectedWorker == null) {
+                showAlert(Alert.AlertType.INFORMATION, "Error", "double-click a worker to select one");
+                return;
+            }
+            // the worker's own name is queried alongside its aliases, since records
+            // may have been logged under the full name itself
+            nameList = new ArrayList<>();
+            nameList.add(selectedWorker);
+            for (String alias : workerAliasListView.getItems()) {
+                if (!nameList.contains(alias)) {
+                    nameList.add(alias);
+                }
+            }
         } else {
             nameList = new ArrayList<>(selectedNames.getItems());
         }
@@ -183,6 +213,7 @@ public class GenerateLogsController {
         controller.getTotalHoursForLabel();
 
         controller.trackNames(nameList);
+        controller.setWorkerState(useWorkerRadioButton.isSelected(), selectedWorker);
 
         // Switch to the new scene
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -222,6 +253,7 @@ public class GenerateLogsController {
         if (event.getClickCount() == 2) {
             String worker = workerListView.getSelectionModel().getSelectedItem();
             if (worker != null) {
+                selectedWorker = worker;
                 initWorkerAliasNames(worker);
             }
         }

@@ -132,7 +132,7 @@ public class ManageWorkerController {
     public void addAlias(MouseEvent event) {
         if (event.getClickCount() == 2) {
             String selectedAlias = logEntryNameListView.getSelectionModel().getSelectedItem();
-            if (newWorkerField != null && 
+            if (selectedWorker != null &&
                 selectedAlias != null &&
                 !aliasListView.getItems().contains(selectedAlias)) {
                 aliasListView.getItems().add(selectedAlias);
@@ -152,6 +152,14 @@ public class ManageWorkerController {
 
     // update the aliases for the selected worker in the database
     public void updateWorkerAliases(){
+        if (selectedWorker == null) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Update Worker Aliases");
+            alert.setHeaderText(null);
+            alert.setContentText("Double-click a worker before updating aliases.");
+            alert.showAndWait();
+            return;
+        }
         ArrayList<String> selectedAliases = new ArrayList<>(aliasListView.getItems());
         String full_name = selectedWorker;
         ConnectDB connectDB = new ConnectDB();
