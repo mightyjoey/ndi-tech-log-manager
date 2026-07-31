@@ -70,12 +70,17 @@ Create a macOS app image:
 jpackage \
   --type app-image \
   --name M11TechLogApp \
+  --app-version 1.2.0 \
   --input target/jpackage-input \
   --main-jar M11TechLogApp-shaded.jar \
   --main-class org.example.m11techlogapp.Launcher \
   --icon MyIcon.icns \
   --dest .
 ```
+
+Keep `--app-version` in step with `<version>` in `pom.xml`. Without it
+`jpackage` defaults to `1.0`, and the bundle reports that version in
+`Info.plist` regardless of what the project version says.
 
 The Maven build stages everything that belongs in the app image under `target/jpackage-input`: the shade plugin writes `M11TechLogApp-shaded.jar` there, and `src/main/jpackage/worker_entry.db` is copied alongside it. Point `jpackage --input` at that directory rather than at `target` — `jpackage` copies *every* file from the input directory into the app image, so passing `target` would also sweep in the thin `M11TechLogApp-<version>.jar` and emit a duplicate `app.classpath` entry in the generated `.cfg`.
 
@@ -99,6 +104,7 @@ Create a Windows app image:
 jpackage `
   --type app-image `
   --name M11TechLogApp `
+  --app-version 1.2.0 `
   --input target\jpackage-input `
   --main-jar M11TechLogApp-shaded.jar `
   --main-class org.example.m11techlogapp.Launcher `
