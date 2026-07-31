@@ -12,6 +12,8 @@
         <java.version>22</java.version>
         <javafx.version>22.0.1</javafx.version>
         <javafx.platform>mac-aarch64</javafx.platform>
+        <!-- Staging dir for the jpackage input option; holds only what belongs in the app image -->
+        <jpackage.input.directory>${project.build.directory}/jpackage-input</jpackage.input.directory>
     </properties>
 
     <profiles>
@@ -172,7 +174,7 @@
                 <version>3.2.5</version>
             </plugin>
 
-            <!-- Copy packaging resources into target so jpackage includes them in the app image -->
+            <!-- Copy packaging resources into the jpackage staging dir so jpackage includes them in the app image -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -185,7 +187,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <outputDirectory>${jpackage.input.directory}</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>src/main/jpackage</directory>
@@ -214,7 +216,9 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedArtifactId>M11TechLogApp</shadedArtifactId>
-                            <finalName>M11TechLogApp-shaded</finalName>
+                            <!-- Write into a staging dir holding only the shaded jar, so the
+                                 jpackage input directory cannot also pick up the thin jar -->
+                            <outputFile>${jpackage.input.directory}/M11TechLogApp-shaded.jar</outputFile>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.example.m11techlogapp.Launcher</mainClass>
